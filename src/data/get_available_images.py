@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     for ac_manu in info_dict["manufacturers"].keys():
         out_filepath = BASE_PATH / "/".join(["data", "raw", f"{ac_manu}.pickle"])
-        if out_filepath.exists:
+        if out_filepath.exists():
             output_df = pd.read_pickle(out_filepath)
         else:
             print(f"Fetching data for {ac_manu}...")
