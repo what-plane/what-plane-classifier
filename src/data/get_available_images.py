@@ -6,7 +6,6 @@ import pandas as pd
 
 from airlinersnet import airlinersConnector
 from actype_classes import ACTYPE_DICT
-from clean_airliners_data import clean_airliners_df
 
 if __name__ == '__main__':
     BASE_PATH = Path(".")
@@ -34,5 +33,5 @@ if __name__ == '__main__':
     all_df["PhotoId"] = pd.to_numeric(all_df["PhotoId"]).astype("Int32")
 
     all_df["Class"] = "Unknown"
-    for ac_class, ac_regex in ACTYPE_DICT.items():
-        all_df.loc[all_df["ACType"].str.contains(ac_regex, regex=True), "Class"] = ac_class
+    for ac_class, class_info in ACTYPE_DICT.items():
+        all_df.loc[all_df["ACType"].str.contains(class_info["match_regex"], regex=True), "Class"] = ac_class
