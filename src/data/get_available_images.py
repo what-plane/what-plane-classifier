@@ -2,7 +2,10 @@
 import json
 from pathlib import Path
 
+import pandas as pd
+
 from airlinersnet import airlinersConnector
+from clean_airliners_data import clean_airliners_df
 
 if __name__ == '__main__':
     BASE_PATH = Path(".")
@@ -11,9 +14,20 @@ if __name__ == '__main__':
 
     ac = airlinersConnector(info_dict)
 
-    for ac_manu in info_dict["manufacturers"].keys():
-        print(f"Fetching data for {ac_manu}...")
-        output_df = ac.get_all_results_by_manufacturer(ac_manu)
-        print(f"Saving data for {ac_manu}...")
-        output_df.to_pickle(f"{ac_manu}.pickle")
+    output_df_list = []
 
+    for ac_manu in info_dict["manufacturers"].keys():
+        out_filepath = BASE_PATH / "/".join(["data", "raw", f"{ac_manu}.pickle"])
+        if out_filepath.exists:
+            output_df = pd.read_pickle(out_filepath)
+        else:
+            print(f"Fetching data for {ac_manu}...")
+            output_df = ac.get_all_results_by_manufacturer(ac_manu)
+            print(f"Saving data for {ac_manu}...")
+            output_df.to_pickle(out_filepath)
+
+        output_df_list.append(output_df)
+
+    all_df = pd.concat(output_df_list, axis=0, ignore_index=True)
+
+    all_df["PhotoId"] = pd.to_numeric(all_df["PhotoId"]).astype("Int32")
