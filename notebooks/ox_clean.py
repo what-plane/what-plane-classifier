@@ -39,3 +39,8 @@ def move_files():
             shutil.move(source+f, train)
         elif f in val_images:
             shutil.move(source+f, valid)
+
+
+if __name__ == "__main__":
+    get_images_names()
+    move_files()
