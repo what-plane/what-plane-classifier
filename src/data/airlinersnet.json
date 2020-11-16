@@ -1,0 +1,44 @@
+{
+    "base_url": "https://www.airliners.net/",
+    "search_ext": "search?aircraftManufacturer={manu}&user={user}&sortBy=dateAccepted&sortOrder=desc&perPage=84&display=detail&page={page}",
+    "permitted_users": {
+        "names": [
+            "Mick Bajcar",
+            "Aldo Bidini",
+            "Wim Callaert",
+            "Thomas Desmet Photography",
+            "Thomas Posch - VAP",
+            "James Richard Covington",
+            "Gerry Stegmeier",
+            "Ben Wang",
+            "Darren Wilson",
+            "Konstantin von Wedelstaedt"
+        ],
+        "userids": [
+            "dendrobatid",
+            "aldobid",
+            "minoeke",
+            "tommypilot",
+            "snorre",
+            "lemonkitty",
+            "stegi",
+            "aal151heavy",
+            "dazbo5",
+            "fly-k"
+        ]
+    },
+    "manufacturers": {
+        "Boeing": {
+            "id": 7
+        },
+        "Airbus": {
+            "id": 2
+        },
+        "Embraer": {
+            "id": 15
+        },
+        "Bombardier": {
+            "id": 73
+        }
+    }
+}

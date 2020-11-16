@@ -1,0 +1,22 @@
+name: whichac
+dependencies:
+  - python=3.8
+  - pip
+  # External Package Requirements
+  - pytorch=1.6.0
+  - torchvision
+  - beautifulsoup4
+  - pandas
+  - requests
+  # Devops Requirements
+  - ipython
+  - click
+  - Sphinx
+  - black
+  - radon
+  - pytest
+  - mypy
+  - coverage
+  # Install local package with pip
+  - pip:
+    - -r file:requirements.txt
