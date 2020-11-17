@@ -79,19 +79,19 @@ ACTYPE_DICT = {
         "class_id": 19,
 		"match_regex": r"Bombardier DHC-8-40[12] Q400",
 	},
-    "Bombardier CRJ 200": {
+    "Bombardier CRJ 200 Series": {
         "class_id": 20,
 		"match_regex": r"Bombardier CRJ-[12]00\D",
 	},
-    "Bombardier CRJ 700": {
+    "Bombardier CRJ 700 Series": {
         "class_id": 21,
 		"match_regex": r"Bombardier CRJ-([79]0[0-9]|1000)",
 	},
-    "Embraer ERJ": {
+    "Embraer ERJ Family": {
         "class_id": 22,
 		"match_regex": r"Embraer ERJ-1[34][05]",
 	},
-    "Embraer E-Jet": {
+    "Embraer E-Jet Family": {
         "class_id": 23,
 		"match_regex": r"Embraer 1[7-9][05]",
 	},
