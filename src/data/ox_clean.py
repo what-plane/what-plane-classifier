@@ -15,7 +15,7 @@ families = []
 with open('ox_class_mapping.json') as f:
     class_dict = json.load(f)
 
-with open('ox_folder_mapping.json') as f:
+with open('ox_folder_mapping_all_classes.json') as f:
     family_dict = json.load(f)
 
 
