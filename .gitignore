@@ -26,6 +26,7 @@ var/
 
 # PyTorch & Tensorboard runs
 *.pt
+*.pth
 **/runs
 
 # PyInstaller
