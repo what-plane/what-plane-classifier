@@ -35,7 +35,7 @@ def get_images_names():
         for line in f:
             train_images.append(line.split()[0]+".jpg")
 
-    with open(data_dir+'images_family_trainval.txt', 'r') as f:
+    with open(data_dir+'images_family_val.txt', 'r') as f:
         for line in f:
             val_images.append(line.split()[0]+".jpg")
 
