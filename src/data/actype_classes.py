@@ -57,7 +57,7 @@ ACTYPE_DICT = {
 	},
     "Airbus A320 Family": {
         "class_id": 14,
-		"match_regex": r"Airbus A3[12][8901]",
+		"match_regex": r"Airbus A3(18|19|20|21)",
 	},
     "Airbus A330": {
         "class_id": 15,
