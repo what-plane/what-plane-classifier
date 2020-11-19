@@ -29,6 +29,10 @@ var/
 *.pth
 **/runs
 
+# API Testing Images
+app/test_images/*.jpg
+app/models/*.*
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
