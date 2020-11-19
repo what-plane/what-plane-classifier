@@ -65,9 +65,9 @@ def train_model(model, optimizer, losses, acc, dataloaders, criterion, n_epochs=
             running_loss = 0
             running_acc = 0
 
+            # Init progress bar
             steps = 0
             step_bar = tqdm(total=len(dataloaders[phase]), desc="Steps", position=0)
-
             postfix_dict = {"Phase": phase, "Loss": "None"}
 
             for images, labels in dataloaders[phase]:
@@ -92,6 +92,7 @@ def train_model(model, optimizer, losses, acc, dataloaders, criterion, n_epochs=
                 running_acc += torch.mean(equals.type(torch.FloatTensor)).item()
                 running_loss += loss.item()
 
+                # Update Progress Bar
                 steps += 1
                 postfix_dict["Loss"] = str(round(running_loss / steps, 3))
                 step_bar.set_postfix(postfix_dict)
