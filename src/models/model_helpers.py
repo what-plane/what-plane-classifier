@@ -51,10 +51,11 @@ def initialize_model(arch, hidden_units, class_to_idx, dropout):
                 ("relu1", nn.ReLU()),
                 ("drop1", nn.Dropout(dropout)),
                 ("fc2", nn.Linear(hidden_units, len(class_to_idx))),
-                ("output", nn.LogSoftmax(dim=1)),
+                ('output', nn.LogSoftmax(dim=1))
             ]
         )
     )
+    print(classifier)
     model.classifier = classifier
 
     model.class_to_idx = class_to_idx
