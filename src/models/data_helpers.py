@@ -14,6 +14,7 @@ ROTATION_ANGLE = 10
 
 NORM = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
+
 def load_data(data_dir, batch_size):
     # TODO: Write docstring
     """[summary]
