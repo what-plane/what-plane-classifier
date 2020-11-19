@@ -36,8 +36,6 @@ def predict(img_path, model):
     model.eval()
 
     with torch.no_grad():
-        if use_cuda:
-            inputs = inputs.cuda()
         outputs = model(inputs)
         _, preds = torch.max(outputs, 1)
     # model.train()
