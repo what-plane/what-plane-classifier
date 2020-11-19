@@ -107,7 +107,7 @@ def process_image(image_path):
             transforms.Resize(256),
             transforms.CenterCrop(IMAGE_SIZE),
             transforms.ToTensor(),
-            transforms.Normalize(mean=NORM[0], std=[NORM[1]),
+            transforms.Normalize(*NORM)
         ]
     )
 
