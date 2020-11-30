@@ -1,9 +1,8 @@
 import torch
 import numpy as np
-import cv2
 import matplotlib.pyplot as plt
 
-from .data_helpers import process_image
+from .data_helpers import process_image, plot_image
 
 def test(loaders, model, criterion, use_cuda):
     # TODO Refactor this
@@ -33,7 +32,7 @@ def test(loaders, model, criterion, use_cuda):
     print("\nTest Accuracy: %2d%% (%2d/%2d)" % (100.0 * correct / total, correct, total))
 
 
-def predict(image_path, model, cat_to_name, topk=1, device=torch.device('cpu')):
+def predict(image_path, model, cat_to_name, topk=1, softmax_included=False, device=torch.device('cpu')):
     ''' Predict the class (or classes) of an image using a trained deep learning model.
 
     Args:
@@ -50,7 +49,7 @@ def predict(image_path, model, cat_to_name, topk=1, device=torch.device('cpu')):
         >>> result = predict('images/flower.jpg', model, cat_to_name, 5, torch.device('cpu'))
     '''
 
-    image = torch.from_numpy(process_image(image_path)).float().unsqueeze(0)
+    image = process_image(image_path).float().unsqueeze(0)
 
     image = image.to(device)
     model.to(device)
@@ -60,7 +59,8 @@ def predict(image_path, model, cat_to_name, topk=1, device=torch.device('cpu')):
     with torch.set_grad_enabled(False):
         output = model(image)
 
-    probs = torch.exp(output)
+    probs = torch.nn.functional.softmax(output, dim=1)
+    #probs = torch.exp(output)
     top_probs, top_classes = probs.topk(topk)
 
     top_probs = top_probs.cpu().numpy().tolist()[0]
@@ -77,15 +77,10 @@ def predict(image_path, model, cat_to_name, topk=1, device=torch.device('cpu')):
 
     return prediction_dict
 
-def plot_image(img_path):
-    img = cv2.imread(img_path)
-    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    plt.imshow(rgb)
-    plt.axis('off')
-    plt.show()
-
-def caption_images(img_path, top_k, model, cat_to_name):
+def caption_image(img_path, model, cat_to_name, top_k):
+    print(cat_to_name)
     probs, classes = predict(img_path, model, top_k)
+    print(probs_classes)
     class_names = [cat_to_name[x] for x in classes]
     print(f"Top {top_k} predictions: {list(zip(class_names, probs))}")
     plot_image(img_path)

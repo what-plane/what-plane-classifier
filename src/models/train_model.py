@@ -12,7 +12,9 @@ from torchvision import models
 from torch.utils.tensorboard import SummaryWriter
 
 
-def train_model(model, optimizer, losses, acc, dataloaders, criterion, n_epochs=3, device=torch.device("cpu")):
+def train_model(
+    model, optimizer, losses, acc, dataloaders, criterion, n_epochs=3, device=torch.device("cpu")
+):
     """Train PyTorch model with specified optimizer & dataloaders
 
     With specified model, optimiser, dataloaders, train the model using training data for
@@ -46,12 +48,12 @@ def train_model(model, optimizer, losses, acc, dataloaders, criterion, n_epochs=
     writer = SummaryWriter()
     writer.flush()
 
-    start_epoch = len(acc["valid"])
+    start_epoch = len(losses["valid"])
 
     model.to(device)
 
     best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = 0.0
+    best_loss = np.Inf
 
     for epoch in range(start_epoch, start_epoch + n_epochs):
 
@@ -85,27 +87,27 @@ def train_model(model, optimizer, losses, acc, dataloaders, criterion, n_epochs=
                         loss.backward()
                         optimizer.step()
 
-                probs = torch.exp(outputs)
+                probs = nn.functional.softmax(outputs, dim=1)
                 top_p, top_class = probs.topk(1, dim=1)
                 equals = top_class == labels.view(*top_class.shape)
-
                 running_acc += torch.mean(equals.type(torch.FloatTensor)).item()
+
                 running_loss += loss.item()
 
                 # Update Progress Bar
                 steps += 1
-                postfix_dict["Loss"] = str(round(running_loss / steps, 3))
+                postfix_dict['Loss'] = str(round(running_loss/steps, 3))
                 step_bar.set_postfix(postfix_dict)
                 step_bar.update(1)
 
             step_bar.close()
 
             epoch_loss = running_loss / len(dataloaders[phase])
-            epoch_acc = running_acc / len(dataloaders[phase])
-
             losses[phase].append(epoch_loss)
-            acc[phase].append(epoch_acc)
             writer.add_scalar(f"Loss/{phase}", epoch_loss, epoch)
+
+            epoch_acc = running_acc / len(dataloaders[phase])
+            acc[phase].append(epoch_acc)
 
             if phase == "valid":
                 print("-" * 8)
@@ -117,8 +119,8 @@ def train_model(model, optimizer, losses, acc, dataloaders, criterion, n_epochs=
                     "Validation Accuracy: {:.3f}".format(acc["valid"][-1]),
                 )
 
-                if epoch_acc > best_acc:
-                    best_acc = epoch_acc
+                if epoch_loss < best_loss:
+                    best_loss = epoch_loss
                     best_model_wts = copy.deepcopy(model.state_dict())
 
     model.load_state_dict(best_model_wts)
