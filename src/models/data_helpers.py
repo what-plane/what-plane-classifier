@@ -14,6 +14,37 @@ ROTATION_ANGLE = 10
 
 NORM = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
+l = IMAGE_SIZE/2
+
+rad = math.radians(ROTATION_ANGLE)
+c = math.cos(rad)
+s = math.sin(rad)
+
+x = l*c-l*s
+y = l*s+l*c
+rotpad = math.ceil(max(x,y)-l)
+
+TRAIN_TRANSFORM = transforms.Compose(
+            [
+                transforms.Pad((0,0,0,-BANNERHEIGHT)), # Crop banner from bottom edge of image
+                transforms.Resize(240),
+                transforms.RandomResizedCrop(IMAGE_SIZE),
+                transforms.RandomHorizontalFlip(),
+                transforms.Pad(rotpad, padding_mode='reflect'), # Mirror boundary to avoid empty corners of rotated image
+                transforms.RandomRotation(ROTATION_ANGLE),
+                transforms.CenterCrop(IMAGE_SIZE),
+                transforms.ToTensor(),
+                transforms.Normalize(*NORM)
+            ])
+
+PREDICT_TRANSFORM = transforms.Compose(
+            [
+                transforms.Pad((0,0,0,-BANNERHEIGHT)),
+                transforms.Resize(256),
+                transforms.CenterCrop(IMAGE_SIZE),
+                transforms.ToTensor(),
+                transforms.Normalize(*NORM)
+            ])
 
 def load_data(data_dir, batch_size):
     # TODO: Write docstring
@@ -26,52 +57,11 @@ def load_data(data_dir, batch_size):
         [type]: [description]
     """
     data_dir = Path(data_dir)
-    train_dir = data_dir / "train"
-    test_dir = data_dir / "test"
-    valid_dir = data_dir / "valid"
-
-    l = IMAGE_SIZE/2
-
-    rad = math.radians(ROTATION_ANGLE)
-    c = math.cos(rad)
-    s = math.sin(rad)
-
-    x = l*c-l*s
-    y = l*s+l*c
-    rotpad = math.ceil(max(x,y)-l)
 
     data_transforms = {
-        "train": transforms.Compose(
-            [
-                transforms.Pad((0,0,0,-BANNERHEIGHT)), # Crop banner from bottom edge of image
-                transforms.Resize(240),
-                transforms.RandomResizedCrop(IMAGE_SIZE),
-                transforms.RandomHorizontalFlip(),
-                transforms.Pad(rotpad, padding_mode='reflect'), # Mirror boundary to avoid empty corners of rotated image
-                transforms.RandomRotation(ROTATION_ANGLE),
-                transforms.CenterCrop(IMAGE_SIZE),
-                transforms.ToTensor(),
-                transforms.Normalize(*NORM)
-            ]
-        ),
-        "valid": transforms.Compose(
-            [
-                transforms.Pad((0,0,0,-BANNERHEIGHT)),
-                transforms.Resize(256),
-                transforms.CenterCrop(IMAGE_SIZE),
-                transforms.ToTensor(),
-                transforms.Normalize(*NORM)
-            ]
-        ),
-        "test": transforms.Compose(
-            [
-                transforms.Pad((0,0,0,-BANNERHEIGHT)),
-                transforms.Resize(256),
-                transforms.CenterCrop(IMAGE_SIZE),
-                transforms.ToTensor(),
-                transforms.Normalize(*NORM)
-            ]
-        ),
+        "train": TRAIN_TRANSFORM,
+        "valid": PREDICT_TRANSFORM,
+        "test": PREDICT_TRANSFORM,
     }
 
     image_datasets = {
@@ -85,8 +75,6 @@ def load_data(data_dir, batch_size):
     }
 
     dataset_sizes = {x: len(image_datasets[x]) for x in ["train", "test", "valid"]}
-
-    class_names = image_datasets["train"].classes
 
     return dataloaders, dataset_sizes, image_datasets
 
@@ -103,14 +91,7 @@ def process_image(image_path):
     """
     img_pil = Image.open(image_path)
 
-    adjustments = transforms.Compose(
-        [
-            transforms.Resize(256),
-            transforms.CenterCrop(IMAGE_SIZE),
-            transforms.ToTensor(),
-            transforms.Normalize(*NORM)
-        ]
-    )
+    adjustments = PREDICT_TRANSFORM
 
     img_tensor = adjustments(img_pil)
 
@@ -128,5 +109,13 @@ def imshow(img_tensor, title=None):
     if title is not None:
         plt.title(title)
     plt.pause(0.001)  # pause a bit so that plots are updated
+
+    return
+
+def plot_image(img_path):
+    img_pil = Image.open(image_path)
+    plt.imshow(img_pil)
+    plt.axis('off')
+    plt.show()
 
     return
