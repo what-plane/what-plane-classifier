@@ -1,54 +1,57 @@
-import io
-import json
-
-import torch
-import torch.optim as optim
-import torch.nn as nn
-from torchvision import models
-import torchvision.transforms as transforms
+from flask import Flask, request, render_template, jsonify
 from PIL import Image
-from flask import Flask, jsonify, request
-from data_loaders import load_data
-from model_helpers import init_model
-from train_model import train, test
-from predict import predict as predict_func
-
-
-use_cuda = torch.cuda.is_available()
+import torchvision.transforms as transforms
+from torchvision import models
+import torch
+from pathlib import Path
+import sys
+import os
+import json
+import io
+sys.path.insert(0, '..')  # noqa
+import src.models.model_helpers as mh  # noqa
+from src.models.data_helpers import load_data, imshow, plot_image  # noqa
+from src.models.train_model import train_model  # noqa
+from src.models.predict_model import test, predict, caption_image  # noqa
 
 app = Flask(__name__)
-with open("./models/airlinersnet_mapping.json", "r") as f:
-    cat_to_name = json.load(f)
 
-with open("./models/torch_mapping.json", "r") as f:
-    torch_mapping = json.load(f)
+with open("./data/imagenet_class_index.json") as f:
+    imagenet_class_index = json.load(f)
 
-class_names = [cat_to_name[x] for x in torch_mapping.keys()]
+model = models.densenet121(pretrained=True)
+model.eval()
 
-
-def load_chkpoint():
-    model_transfer = torch.load('./models/densenet_full_-30-model.pth',
-                                map_location=torch.device('cpu'))
-
-    criterion_transfer = nn.CrossEntropyLoss()
-    optimizer_transfer = optim.SGD(
-        model_transfer.parameters(), lr=0.001, momentum=0.9)
-    model_transfer.load_state_dict(torch.load(
-        './models/model_densenet_sgd_30_airlinersnet.pt', map_location=torch.device('cpu')))
-    return model_transfer
+# def load_model(model_path):
+#     model
 
 
-def predict_aircraft(img_path):
-    idx = predict_func(img_path, load_chkpoint())
-    return class_names[idx]
+def transform_image(image_bytes):
+    my_transforms = transforms.Compose([transforms.Resize(255),
+                                        transforms.CenterCrop(224),
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(
+                                            [0.485, 0.456, 0.406],
+                                            [0.229, 0.224, 0.225])])
+    image = Image.open(io.BytesIO(image_bytes))
+    return my_transforms(image).unsqueeze(0)
 
 
-@ app.route('/predict', methods=['POST'])
-def predict():
+def imagenet_pred(image_bytes):
+    tensor = transform_image(image_bytes=image_bytes)
+    outputs = model.forward(tensor)
+    _, y_hat = outputs.max(1)
+    predicted_idx = str(y_hat.item())
+    return imagenet_class_index[predicted_idx]
+
+
+@app.route('/predict', methods=['POST'])
+def imagenet_predict():
     if request.method == 'POST':
         file = request.files['file']
-        class_name = predict_aircraft(file)
-        return jsonify({'class_name': class_name})
+        img_bytes = file.read()
+        class_id, class_name = imagenet_pred(image_bytes=img_bytes)
+        return jsonify({'class_id': class_id, 'class_name': class_name})
 
 
 if __name__ == '__main__':
