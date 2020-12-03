@@ -23,6 +23,8 @@ var/
 .installed.cfg
 *.egg
 
+# Flask env files
+*.flaskenv
 
 # PyTorch & Tensorboard runs
 *.pt
@@ -32,6 +34,7 @@ var/
 # API Testing Images
 app/test_images/*.jpg
 app/models/*.*
+app/*.jpg
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
