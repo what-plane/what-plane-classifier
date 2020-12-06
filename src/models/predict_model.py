@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .data_helpers import process_image, plot_image
+from .data_helpers import process_image, plot_image, unnormalize_img_tensor
 
 def test(loaders, model, criterion, use_cuda):
     # TODO Refactor this
@@ -32,7 +32,7 @@ def test(loaders, model, criterion, use_cuda):
     print("\nTest Accuracy: %2d%% (%2d/%2d)" % (100.0 * correct / total, correct, total))
 
 
-def predict(image_path, model, cat_to_name, topk=1, softmax_included=False, device=torch.device('cpu')):
+def predict(image_path, model, topk=1, device=torch.device('cpu')):
     ''' Predict the class (or classes) of an image using a trained deep learning model.
 
     Args:
@@ -59,28 +59,49 @@ def predict(image_path, model, cat_to_name, topk=1, softmax_included=False, devi
     with torch.set_grad_enabled(False):
         output = model(image)
 
-    probs = torch.nn.functional.softmax(output, dim=1)
-    #probs = torch.exp(output)
-    top_probs, top_classes = probs.topk(topk)
-
-    top_probs = top_probs.cpu().numpy().tolist()[0]
-    top_classes = top_classes.cpu().numpy().tolist()[0]
-
-    idx_to_class = {val: key for key, val in model.class_to_idx.items()}
-
-    if cat_to_name:
-        top_classes = [cat_to_name[idx_to_class[class_no]] for class_no in top_classes]
+    if "LogSoftmax" in str(model.classifier[-1]):
+        probs = torch.exp(output)
     else:
-        top_classes = [idx_to_class[class_no] for class_no in top_classes]
+        probs = torch.nn.functional.softmax(output, dim=1)
 
-    prediction_dict = dict(zip(top_classes,top_probs))
+    top_probs, top_classes = probs.topk(topk)
+    top_probs = top_probs.cpu().numpy().tolist()[0]
 
-    return prediction_dict
+    top_classes = [model.classes[i] for i in top_classes.cpu().numpy().tolist()[0]]
 
-def caption_image(img_path, model, cat_to_name, top_k):
-    print(cat_to_name)
-    probs, classes = predict(img_path, model, top_k)
-    print(probs_classes)
-    class_names = [cat_to_name[x] for x in classes]
-    print(f"Top {top_k} predictions: {list(zip(class_names, probs))}")
-    plot_image(img_path)
+    return top_probs, top_classes
+
+def predict_aircraft(image_path, model):
+    _, classes = predict(image_path, model)
+
+    return classes[0]
+
+
+def visualize_results(dataloader, model):
+    # Visualize some sample data
+
+    device = model.device
+
+    # Get a batch of data
+    images, labels = next(iter(dataloader))
+
+    images = images[:10]
+    labels = labels[:10]
+
+    model.eval()
+
+    with torch.no_grad():
+        images, labels = images.to(device), labels.to(device)
+        outputs = model(images)
+        _, preds = torch.max(outputs, 1)
+        predicted_classes = preds.cpu().numpy()
+        correct_classes = labels.cpu().numpy
+
+    model.train()
+
+    fig = plt.figure(figsize=(25, 3))
+    for i in np.arange(10):
+        ax = fig.add_subplot(1, 10, i+1, xticks=[], yticks=[])
+        imshow(images[i])
+        ax.set_title('{}\n({})'.format(model.classes[predicted_classes[i]], model.classes[correct_classes[i]]),
+                 color=('green' if predicted_classes[i]==correct_classes[i] else 'red'))

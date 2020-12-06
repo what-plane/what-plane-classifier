@@ -11,10 +11,10 @@ import torch.optim as optim
 from torchvision import models
 from torch.utils.tensorboard import SummaryWriter
 
+from .model_helpers import save_checkpoint, load_checkpoint, gen_model_path
 
-def train_model(
-    model, optimizer, losses, acc, dataloaders, criterion, n_epochs=3, device=torch.device("cpu")
-):
+
+def train_model(model, optimizer, dataloaders, criterion, n_epochs, tag, models_folder):
     """Train PyTorch model with specified optimizer & dataloaders
 
     With specified model, optimiser, dataloaders, train the model using training data for
@@ -45,27 +45,49 @@ def train_model(
                                         dataloaders, torch.nn.NLLLoss(), 5, torch.device('cpu'))
     """
 
+    PHASES = ["train", "valid"]
+
+    model.to(model.device)
+
+    # Tensorboard
     writer = SummaryWriter()
+    comment = "Training {} for {} epochs on {}\n".format(tag, n_epochs, model.device)
+    print(comment)
+    writer.add_text("TRAIN", comment)
+    comment = "Model: {}\nCriterion: {}\nOptimizer: {}\n".format(
+        model.arch, optimizer.__class__.__name__, criterion.__class__.__name__
+    )
+    print(comment)
+    writer.add_text("TRAIN", comment)
     writer.flush()
 
-    start_epoch = len(losses["valid"])
+    start_epoch = len(model.losses["valid"])
 
-    model.to(device)
-
-    best_model_wts = copy.deepcopy(model.state_dict())
     best_loss = np.Inf
+
+    if start_epoch == 0:  # Fresh start
+        best_loss = np.Inf
+    else:  # Resume training
+        comment = "Loading previous {} epochs\n".format(start_epoch)
+        print(comment)
+        writer.add_text("TRAIN", comment)
+        for i in range(start_epoch):
+            writer.add_scalars("Loss", {x: model.losses[x][i] for x in PHASES}, i)
+            writer.add_scalars("Accuracy", {x: model.accuracies[x][i] for x in PHASES}, i)
+        writer.flush()
+        best_loss = model.losses["valid"][-1]
 
     for epoch in range(start_epoch, start_epoch + n_epochs):
 
-        for phase in ["train", "valid"]:
+        for phase in PHASES:
+
+            running_loss = 0
+            running_acc = 0
 
             if phase == "train":
                 model.train()  # Set model to training mode
             else:
                 model.eval()  # Set model to evaluate mode
-
-            running_loss = 0
-            running_acc = 0
 
             # Init progress bar
             steps = 0
@@ -73,9 +95,7 @@ def train_model(
             postfix_dict = {"Phase": phase, "Loss": "None"}
 
             for images, labels in dataloaders[phase]:
-                images, labels = images.to(device), labels.to(device)
-
-                optimizer.zero_grad()
+                images, labels = images.to(model.device), labels.to(model.device)
 
                 with torch.set_grad_enabled(phase == "train"):
 
@@ -84,44 +104,49 @@ def train_model(
                     loss = criterion(outputs, labels)
 
                     if phase == "train":
+                        optimizer.zero_grad()
                         loss.backward()
                         optimizer.step()
 
+                running_loss += loss.item()
+
                 probs = nn.functional.softmax(outputs, dim=1)
-                top_p, top_class = probs.topk(1, dim=1)
+                _, top_class = probs.topk(1, dim=1)
                 equals = top_class == labels.view(*top_class.shape)
                 running_acc += torch.mean(equals.type(torch.FloatTensor)).item()
 
-                running_loss += loss.item()
-
                 # Update Progress Bar
                 steps += 1
-                postfix_dict['Loss'] = str(round(running_loss/steps, 3))
+                postfix_dict["Loss"] = str(round(running_loss / steps, 3))
                 step_bar.set_postfix(postfix_dict)
                 step_bar.update(1)
 
             step_bar.close()
 
             epoch_loss = running_loss / len(dataloaders[phase])
-            losses[phase].append(epoch_loss)
-            writer.add_scalar(f"Loss/{phase}", epoch_loss, epoch)
+            model.losses[phase].append(epoch_loss)
 
             epoch_acc = running_acc / len(dataloaders[phase])
-            acc[phase].append(epoch_acc)
+            model.accuracies[phase].append(epoch_acc)
 
             if phase == "valid":
                 print("-" * 8)
                 print(
                     "Epoch: {}/{}.. ".format(epoch + 1, start_epoch + n_epochs),
-                    "Training Loss: {:.3f}.. ".format(losses["train"][-1]),
-                    "Training Accuracy: {:.3f}.. ".format(acc["train"][-1]),
-                    "Validation Loss: {:.3f}.. ".format(losses["valid"][-1]),
-                    "Validation Accuracy: {:.3f}".format(acc["valid"][-1]),
+                    "Training Loss: {:.3f}.. ".format(model.losses["train"][-1]),
+                    "Training Accuracy: {:.3f}.. ".format(model.accuracies["train"][-1]),
+                    "Validation Loss: {:.3f}.. ".format(model.losses["valid"][-1]),
+                    "Validation Accuracy: {:.3f}".format(model.accuracies["valid"][-1]),
+                )
+                writer.add_scalars("Loss", {x: model.losses[x][-1] for x in PHASES}, epoch)
+                writer.add_scalars(
+                    "Accuracy", {x: model.accuracies[x][-1] for x in PHASES}, epoch
                 )
 
                 if epoch_loss < best_loss:
                     best_loss = epoch_loss
-                    best_model_wts = copy.deepcopy(model.state_dict())
+                    save_checkpoint(model, optimizer, tag, models_folder)
 
-    model.load_state_dict(best_model_wts)
-    return model, optimizer, losses, acc
+    load_path = models_folder / gen_model_path(model, optimizer, tag)
+    model, optimizer = load_checkpoint(model, optimizer, load_path)
+    return model, optimizer
