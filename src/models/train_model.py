@@ -110,8 +110,7 @@ def train_model(model, optimizer, dataloaders, criterion, n_epochs, tag, models_
 
                 running_loss += loss.item()
 
-                probs = nn.functional.softmax(outputs, dim=1)
-                _, top_class = probs.topk(1, dim=1)
+                _, top_class = torch.max(outputs, 1)
                 equals = top_class == labels.view(*top_class.shape)
                 running_acc += torch.mean(equals.type(torch.FloatTensor)).item()
 
@@ -139,9 +138,7 @@ def train_model(model, optimizer, dataloaders, criterion, n_epochs, tag, models_
                     "Validation Accuracy: {:.3f}".format(model.accuracies["valid"][-1]),
                 )
                 writer.add_scalars("Loss", {x: model.losses[x][-1] for x in PHASES}, epoch)
-                writer.add_scalars(
-                    "Accuracy", {x: model.accuracies[x][-1] for x in PHASES}, epoch
-                )
+                writer.add_scalars("Accuracy", {x: model.accuracies[x][-1] for x in PHASES}, epoch)
 
                 if epoch_loss < best_loss:
                     best_loss = epoch_loss

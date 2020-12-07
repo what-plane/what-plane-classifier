@@ -110,38 +110,9 @@ def unnormalize_img_tensor(img_tensor):
     Returns:
         [type]: [description]
     """
-    img_tensor = img_tensor.numpy().transpose((1, 2, 0))
+    img_tensor = img_tensor.cpu().numpy().transpose((1, 2, 0))
     mean = np.array(NORM[0])
     std = np.array(NORM[1])
     img_tensor = std * img_tensor + mean
     img_tensor = np.clip(img_tensor, 0, 1)
     return img_tensor
-
-def visualize_sample(dataloader, model):
-    """[summary]
-
-    Args:
-        dataloader ([type]): [description]
-        model ([type]): [description]
-    """
-    # Get a batch of data
-    images, labels = next(iter(dataloader))
-
-    images = images[:10]
-    labels = labels[:10]
-
-    fig = plt.figure(figsize=(25, 2))
-    for i in np.arange(10):
-        ax = fig.add_subplot(1, 10, i+1, xticks=[], yticks=[])
-        plt.imshow(unnormalize_img_tensor(images[i]))
-        ax.set_title(model.classes[labels[i]])
-
-    return
-
-def plot_image(img_path):
-    img_pil = Image.open(img_path)
-    plt.imshow(img_pil)
-    plt.axis("off")
-    plt.show()
-
-    return
