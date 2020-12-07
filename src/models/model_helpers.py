@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import os
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -7,7 +8,9 @@ import torch.optim as optim
 from torchvision import models
 
 
-def initialize_model(arch, hidden_units, class_to_idx, dropout, freeze_model=True):
+def initialize_model(
+    arch, class_names, hidden_units, dropout, device, pre_trained=True, freeze_model=True
+):
     # TODO Docstring
     """Create PyTorch model based on Pretrained Network with custom classifier
 
@@ -18,7 +21,7 @@ def initialize_model(arch, hidden_units, class_to_idx, dropout, freeze_model=Tru
         arch (str): Name of pretrained model as per method, i.e. vgg13 for models.vgg13()
                     (see https://pytorch.org/docs/stable/torchvision/models.html)
         hidden_units (int): Number of hidden units in classifier
-        class_to_idx (obj): class_to_idx attribute of dataloader object.
+        class_names (obj): class_names attribute of dataloader object.
         dropout (float): Dropout on fc1
 
     Returns:
@@ -28,20 +31,14 @@ def initialize_model(arch, hidden_units, class_to_idx, dropout, freeze_model=Tru
         >>> model = create_model('densenet121', 512, class_to_idx)
     """
 
-    if arch == "densenet121":
-        model = models.densenet121(pretrained=True)
-        input_units = model.classifier.in_features
-    elif arch == "densenet161":
-        model = models.densenet161(pretrained=True)
-        input_units = model.classifier.in_features
-    elif arch == "vgg13":
-        model = models.vgg13(pretrained=True)
-        input_units = model.classifier[0].in_features
-    elif arch == "vgg16":
-        model = models.vgg16(pretrained=True)
-        input_units = model.classifier[0].in_features
-    else:
-        raise ValueError("Requested arch not available")
+    model = getattr(models, arch)(pretrained=pre_trained)
+    model.arch = arch
+
+    if "classifier" not in str(list(model.named_modules())[-1]):
+        raise RuntimeError("Requested Model Architecture not supported")
+
+    # Replace classifier
+    input_units = model.classifier.state_dict()[next(iter(model.classifier.state_dict()))].size(1)
 
     if freeze_model:
         for param in model.parameters():
@@ -53,67 +50,73 @@ def initialize_model(arch, hidden_units, class_to_idx, dropout, freeze_model=Tru
                 ("fc1", nn.Linear(input_units, hidden_units)),
                 ("relu1", nn.ReLU()),
                 ("drop1", nn.Dropout(dropout)),
-                ("fc2", nn.Linear(hidden_units, len(class_to_idx))),
-                # ("output", nn.Softmax(dim=1)),
+                ("fc2", nn.Linear(hidden_units, len(class_names))),
+                # ("output", nn.LogSoftmax(dim=1)),
             ]
         )
     )
 
     model.classifier = classifier
 
-    model.class_to_idx = class_to_idx
+    model.class_names = class_names
+
+    model.accuracies = {"train": [], "valid": []}
+    model.losses = {"train": [], "valid": []}
+
+    model.device = device
+    model.to(model.device)
 
     return model
 
 
-def save_checkpoint(checkpoint_folder, checkpoint_name, model):
-    # TODO Docstring
-    save_path = checkpoint_folder / f"{checkpoint_name}_checkpoint.pth"
+def save_checkpoint(model, optimizer, tag, models_folder=Path("../models")):
+
+    save_path = models_folder / gen_model_path(model, optimizer, tag)
+
+    print("Saving checkpoint: ", save_path)
 
     model.cpu()
-    torch.save(
-        {"model_state_dict": model.state_dict()}, save_path,
-    )
+    checkpoint = {
+        "arch": model.arch,
+        "class_names": model.class_names,
+        "model_state": model.state_dict(),
+        "optimizer": optimizer.__class__.__name__,
+        "optimizer_state": optimizer.state_dict(),
+        "losses": model.losses,
+        "accuracies": model.accuracies,
+    }
 
-    return
+    torch.save(checkpoint, save_path)
+
+    model.to(model.device)
 
 
-def load_checkpoint(checkpoint_path, model):
-    # TODO Docstring
-    model.load_state_dict(torch.load(checkpoint_path))
-    return model
-
-
-def save_full_model(checkpoint_folder, checkpoint_name, model, optimiser, criterion, losses, acc):
-    # TODO Docstring
-    save_path = checkpoint_folder / f"{checkpoint_name}_full_model.pth"
+def load_checkpoint(model, optimizer, load_path):
 
     model.cpu()
-    torch.save(
-        {
-            "model": model,
-            "losses": losses,
-            "acc": acc,
-            "criterion": criterion,
-            "optimiser": optimiser,
-        },
-        save_path,
+    # load checkpoint
+    print("Loading checkpoint: ", load_path)
+    checkpoint = torch.load(load_path)
+
+    # model
+    assert model.arch == checkpoint["arch"], "Trying to load {} into {}".format(
+        checkpoint["arch"], model.arch
     )
+    model.load_state_dict(checkpoint["model_state"])
+    model.to(model.device)
 
-    return
+    model.class_names = checkpoint["class_names"]
+    model.losses = checkpoint["losses"]
+    model.accuracies = checkpoint["accuracies"]
 
-def load_full_model(checkpoint_path):
-    # TODO Docstring
-    # Load the saved file
-    checkpoint = torch.load(checkpoint_path)
+    # optimizer
+    assert (
+        optimizer.__class__.__name__ == checkpoint["optimizer"]
+    ), "Trying to load {} into {}".format(checkpoint["optimizer"], optimizer.__class__.__name__)
+    optimizer.load_state_dict(checkpoint["optimizer_state"])
 
-    # Load the model
-    model = checkpoint["model"]
+    return model, optimizer
 
-    # Load stuff from checkpoint
-    losses = checkpoint["losses"]
-    acc = checkpoint["acc"]
-    criterion = checkpoint["criterion"]
 
-    optimiser = checkpoint["optimiser"]
-    return model, losses, acc, criterion, optimiser
+def gen_model_path(model, optimizer, tag):
+    return "_".join([tag, model.arch, optimizer.__class__.__name__]) + ".pth"
