@@ -35,6 +35,8 @@ var/
 app/test_images/*.jpg
 app/models/*.*
 app/*.jpg
+app/*.jpeg
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
