@@ -27,7 +27,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 with open("./data/imagenet_class_index.json") as f:
     imagenet_class_index = json.load(f)
 
-imagenet_model = models.densenet161(pretrained=True)
+imagenet_model = mh.initialize_model(
+    "densenet161", imagenet_class_index.values(), replace_classifier=False)
 imagenet_model.eval()
 
 
@@ -53,6 +54,11 @@ def imagenet_pred(image_bytes):
     return imagenet_class_index[predicted_idx]
 
 
+def imagenet_pred_2(file_path, model):
+    top5_vals, top5_class = predict(file_path, model, topk=5)
+    return top5_vals, top5_class
+
+
 @app.route('/', methods=['GET', 'POST'])
 def image_predict():
     if request.method == 'POST':
@@ -69,7 +75,7 @@ def image_predict():
         img_bytes = buf.read()
         buf.close()
         # Load ImageNet model to check image type
-        class_id, class_name = imagenet_pred(image_bytes=img_bytes)
+        class_id, class_name = imagenet_pred_2(file, imagenet_model)
         # If image is an airliner, load inference model
         if class_name != 'airliner':
             return render_template('index.html', class_name=class_name, class_id=class_id, filename=filename)
