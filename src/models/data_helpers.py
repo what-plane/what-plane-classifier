@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 IMAGE_SIZE = 224
 BANNERHEIGHT = 12
@@ -49,7 +49,17 @@ PREDICT_TRANSFORM = transforms.Compose(
 )
 
 
-def load_data(data_dir, batch_size, num_workers=4):
+def class_counts(dataset):
+    _, counts = np.unique(dataset.targets, return_counts=True)
+    return counts
+
+
+def dataset_weights(dataset):
+    class_weights = 1/class_counts(dataset)
+    return class_weights[dataset.targets]
+
+
+def load_data(data_dir, batch_size, num_workers=4, sample=True):
     # TODO: Write docstring
     """[summary]
 
@@ -72,8 +82,13 @@ def load_data(data_dir, batch_size, num_workers=4):
         for x in ["train", "valid", "test"]
     }
 
+    samplers = {
+        x: WeightedRandomSampler(dataset_weights(image_datasets[x]), len(image_datasets[x])) if sample else None
+        for x in ["train", "valid", "test"]
+    }
+
     dataloaders = {
-        x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=num_workers)
+        x: DataLoader(image_datasets[x], sampler=samplers[x], batch_size=batch_size, shuffle=(not sample), num_workers=num_workers)
         for x in ["train", "valid", "test"]
     }
 

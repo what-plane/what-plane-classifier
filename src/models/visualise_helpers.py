@@ -7,27 +7,38 @@ import matplotlib.pyplot as plt
 import torch
 from sklearn.metrics import confusion_matrix
 
-from .data_helpers import unnormalize_img_tensor
+from .data_helpers import unnormalize_img_tensor, class_counts
 from .predict_model import predict
 
-def visualize_sample(dataloader, model):
+
+def plot_class_distribution(dataset, dataset_name):
+    plt.barh(dataset.classes, class_counts(dataset))
+    plt.title(dataset_name)
+    plt.show()
+
+
+def _get_images_from_batch(dataloader):
+    images, labels = next(iter(dataloader))
+    n_images = min(len(images), 10)
+    images = images[:n_images]
+    labels = labels[:n_images]
+
+    return images, labels, n_images
+
+def visualize_sample(dataloader):
     """[summary]
 
     Args:
         dataloader ([type]): [description]
-        model ([type]): [description]
     """
     # Get a batch of data
-    images, labels = next(iter(dataloader))
-
-    images = images[:10]
-    labels = labels[:10]
+    images, labels, n_images = _get_images_from_batch(dataloader)
 
     fig = plt.figure(figsize=(25, 2))
-    for i in np.arange(10):
-        ax = fig.add_subplot(1, 10, i + 1, xticks=[], yticks=[])
+    for i in np.arange(n_images):
+        ax = fig.add_subplot(1, n_images, i + 1, xticks=[], yticks=[])
         plt.imshow(unnormalize_img_tensor(images[i]))
-        ax.set_title(model.class_names[labels[i]])
+        ax.set_title(dataloader.dataset.classes[labels[i]])
 
     return
 
@@ -44,10 +55,7 @@ def plot_image(img_path):
 def visualize_results(dataloader, model):
 
     # Get a batch of data
-    images, labels = next(iter(dataloader))
-
-    images = images[:10]
-    labels = labels[:10]
+    images, labels, n_images = _get_images_from_batch(dataloader)
 
     model.eval()
 
@@ -61,8 +69,8 @@ def visualize_results(dataloader, model):
     model.train()
 
     fig = plt.figure(figsize=(25, 3))
-    for i in np.arange(10):
-        ax = fig.add_subplot(1, 10, i + 1, xticks=[], yticks=[])
+    for i in np.arange(n_images):
+        ax = fig.add_subplot(1, n_images, i + 1, xticks=[], yticks=[])
         plt.imshow(unnormalize_img_tensor(images[i]))
         predicted_class = model.class_names[predicted_classes[i]]
         correct_class = model.class_names[correct_classes[i]]
@@ -70,6 +78,7 @@ def visualize_results(dataloader, model):
         ax.set_title(
             plt_title, color=("green" if predicted_classes[i] == correct_classes[i] else "red"),
         )
+
 
 def predict_test_image_folder(test_image_dir, model):
     test_images = test_image_dir.glob("*/*.jpg")
@@ -117,6 +126,7 @@ def plot_confusion_matrix(
             i,
             str(round(cnf_matrix[i, j], 2)) if normalize else cnf_matrix[i, j],
             horizontalalignment="center",
+            verticalalignment="center",
             color="white" if cnf_matrix[i, j] > thresh else "black",
         )
 
