@@ -9,7 +9,14 @@ from torchvision import models
 
 
 def initialize_model(
-    arch, class_names, hidden_units, dropout, device=torch.device('cpu'), pre_trained=True, freeze_model=True
+    arch,
+    class_names,
+    hidden_units=1024,
+    dropout=0.4,
+    device=torch.device("cpu"),
+    pre_trained=True,
+    freeze_model=True,
+    replace_classifier=True,
 ):
     # TODO Docstring
     """Create PyTorch model based on Pretrained Network with custom classifier
@@ -44,19 +51,20 @@ def initialize_model(
         for param in model.parameters():
             param.requires_grad = False
 
-    classifier = nn.Sequential(
-        OrderedDict(
-            [
-                ("fc1", nn.Linear(input_units, hidden_units)),
-                ("relu1", nn.ReLU()),
-                ("drop1", nn.Dropout(dropout)),
-                ("fc2", nn.Linear(hidden_units, len(class_names))),
-                # ("output", nn.LogSoftmax(dim=1)),
-            ]
+    if replace_classifier:
+        classifier = nn.Sequential(
+            OrderedDict(
+                [
+                    ("fc1", nn.Linear(input_units, hidden_units)),
+                    ("relu1", nn.ReLU()),
+                    ("drop1", nn.Dropout(dropout)),
+                    ("fc2", nn.Linear(hidden_units, len(class_names))),
+                    # ("output", nn.LogSoftmax(dim=1)),
+                ]
+            )
         )
-    )
 
-    model.classifier = classifier
+        model.classifier = classifier
 
     model.class_names = class_names
 
@@ -91,9 +99,9 @@ def save_checkpoint(model, optimizer, tag, models_folder=Path("../models")):
     model.to(model.device)
 
 
-def save_model(model, tag, models_folder=Path("../models")):
+def save_model(model, optimizer, tag, models_folder=Path("../models")):
 
-    tag = "_".join(['model', tag])
+    tag = "_".join(["model", tag])
 
     save_path = models_folder / gen_model_path(model, optimizer, tag)
 
@@ -131,7 +139,7 @@ def load_checkpoint(model, optimizer, load_path):
     return model, optimizer
 
 
-def load_model(load_path, device=torch.device('cpu')):
+def load_model(load_path, device=torch.device("cpu")):
 
     print("Loading model: ", load_path)
     checkpoint = torch.load(load_path)
