@@ -11,9 +11,9 @@ from .data_helpers import unnormalize_img_tensor, class_counts
 from .predict_model import predict
 
 
-def plot_class_distribution(dataset):
+def plot_class_distribution(dataset, dataset_name):
     plt.barh(dataset.classes, class_counts(dataset))
-    plt.title(x)
+    plt.title(dataset_name)
     plt.show()
 
 
@@ -33,7 +33,7 @@ def visualize_sample(dataloader):
     for i in np.arange(10):
         ax = fig.add_subplot(1, 10, i + 1, xticks=[], yticks=[])
         plt.imshow(unnormalize_img_tensor(images[i]))
-        ax.set_title(model.class_names[labels[i]])
+        ax.set_title(dataloader.dataset.classes[labels[i]])
 
     return
 
