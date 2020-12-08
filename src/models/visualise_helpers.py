@@ -17,6 +17,14 @@ def plot_class_distribution(dataset, dataset_name):
     plt.show()
 
 
+def _get_images_from_batch(dataloader):
+    images, labels = next(iter(dataloader))
+    n_images = min(len(images), 10)
+    images = images[:n_images]
+    labels = labels[:n_images]
+
+    return images, labels, n_images
+
 def visualize_sample(dataloader):
     """[summary]
 
@@ -24,14 +32,11 @@ def visualize_sample(dataloader):
         dataloader ([type]): [description]
     """
     # Get a batch of data
-    images, labels = next(iter(dataloader))
-
-    images = images[:10]
-    labels = labels[:10]
+    images, labels, n_images = _get_images_from_batch(dataloader)
 
     fig = plt.figure(figsize=(25, 2))
-    for i in np.arange(10):
-        ax = fig.add_subplot(1, 10, i + 1, xticks=[], yticks=[])
+    for i in np.arange(n_images):
+        ax = fig.add_subplot(1, n_images, i + 1, xticks=[], yticks=[])
         plt.imshow(unnormalize_img_tensor(images[i]))
         ax.set_title(dataloader.dataset.classes[labels[i]])
 
@@ -50,10 +55,7 @@ def plot_image(img_path):
 def visualize_results(dataloader, model):
 
     # Get a batch of data
-    images, labels = next(iter(dataloader))
-
-    images = images[:10]
-    labels = labels[:10]
+    images, labels, n_images = _get_images_from_batch(dataloader)
 
     model.eval()
 
@@ -67,8 +69,8 @@ def visualize_results(dataloader, model):
     model.train()
 
     fig = plt.figure(figsize=(25, 3))
-    for i in np.arange(10):
-        ax = fig.add_subplot(1, 10, i + 1, xticks=[], yticks=[])
+    for i in np.arange(n_images):
+        ax = fig.add_subplot(1, n_images, i + 1, xticks=[], yticks=[])
         plt.imshow(unnormalize_img_tensor(images[i]))
         predicted_class = model.class_names[predicted_classes[i]]
         correct_class = model.class_names[correct_classes[i]]
