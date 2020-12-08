@@ -65,10 +65,7 @@ def predict(image_path, model, topk=1):
     with torch.set_grad_enabled(False):
         output = model(image)
 
-    if "LogSoftmax" in str(model.classifier[-1]):
-        probs = torch.exp(output)
-    else:
-        probs = torch.nn.functional.softmax(output, dim=1)
+    probs = torch.nn.functional.softmax(output, dim=1)
 
     top_probs, top_classes = probs.topk(topk)
     top_probs = top_probs.cpu().numpy().tolist()[0]
