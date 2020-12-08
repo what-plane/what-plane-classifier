@@ -59,7 +59,6 @@ def initialize_model(
                     ("relu1", nn.ReLU()),
                     ("drop1", nn.Dropout(dropout)),
                     ("fc2", nn.Linear(hidden_units, len(class_names))),
-                    # ("output", nn.LogSoftmax(dim=1)),
                 ]
             )
         )
