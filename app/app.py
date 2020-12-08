@@ -57,7 +57,11 @@ def imagenet_pred(image_bytes):
     tensor = transform_image(image_bytes=image_bytes)
     outputs = imagenet_model.forward(tensor)
     _, y_hat = outputs.max(1)
+    percents = torch.nn.functional.softmax(outputs, dim=1)
+    # top5_vals, top5_inds = percents.topk(5, sorted=True)
+    # print(top5_vals[0], top5_inds[0])
     predicted_idx = str(y_hat.item())
+    print(predicted_idx)
     return imagenet_class_index[predicted_idx]
 
 
@@ -78,6 +82,8 @@ def image_predict():
         buf.close()
         # Load ImageNet model to check image type
         class_id, class_name = imagenet_pred(image_bytes=img_bytes)
+        top5_p, top5_c = predict(file, imagenet_model, topk=5)
+        print(top5_c, top5_p)
         # If image is an airliner, load inference model
         if class_name != 'airliner':
             return render_template('index.html', class_name=class_name, class_id=class_id, filename=filename)
