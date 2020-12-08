@@ -7,15 +7,21 @@ import matplotlib.pyplot as plt
 import torch
 from sklearn.metrics import confusion_matrix
 
-from .data_helpers import unnormalize_img_tensor
+from .data_helpers import unnormalize_img_tensor, class_counts
 from .predict_model import predict
 
-def visualize_sample(dataloader, model):
+
+def plot_class_distribution(dataset):
+    plt.barh(dataset.classes, class_counts(dataset))
+    plt.title(x)
+    plt.show()
+
+
+def visualize_sample(dataloader):
     """[summary]
 
     Args:
         dataloader ([type]): [description]
-        model ([type]): [description]
     """
     # Get a batch of data
     images, labels = next(iter(dataloader))
@@ -71,6 +77,7 @@ def visualize_results(dataloader, model):
             plt_title, color=("green" if predicted_classes[i] == correct_classes[i] else "red"),
         )
 
+
 def predict_test_image_folder(test_image_dir, model):
     test_images = test_image_dir.glob("*/*.jpg")
     fig = plt.figure(figsize=(25, 12))
@@ -117,6 +124,7 @@ def plot_confusion_matrix(
             i,
             str(round(cnf_matrix[i, j], 2)) if normalize else cnf_matrix[i, j],
             horizontalalignment="center",
+            verticalalignment="center",
             color="white" if cnf_matrix[i, j] > thresh else "black",
         )
 

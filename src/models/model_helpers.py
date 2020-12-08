@@ -9,7 +9,7 @@ from torchvision import models
 
 
 def initialize_model(
-    arch, class_names, hidden_units, dropout, device, pre_trained=True, freeze_model=True
+    arch, class_names, hidden_units, dropout, device=torch.device('cpu'), pre_trained=True, freeze_model=True
 ):
     # TODO Docstring
     """Create PyTorch model based on Pretrained Network with custom classifier
@@ -91,6 +91,19 @@ def save_checkpoint(model, optimizer, tag, models_folder=Path("../models")):
     model.to(model.device)
 
 
+def save_model(model, tag, models_folder=Path("../models")):
+
+    tag = "_".join(['model', tag])
+
+    save_path = models_folder / gen_model_path(model, optimizer, tag)
+
+    print("Saving model: ", save_path)
+
+    model.cpu()
+    torch.save({"model": model}, save_path)
+    model.to(model.device)
+
+
 def load_checkpoint(model, optimizer, load_path):
 
     model.cpu()
@@ -116,6 +129,18 @@ def load_checkpoint(model, optimizer, load_path):
     optimizer.load_state_dict(checkpoint["optimizer_state"])
 
     return model, optimizer
+
+
+def load_model(load_path, device=torch.device('cpu')):
+
+    print("Loading model: ", load_path)
+    checkpoint = torch.load(load_path)
+
+    model = checkpoint["model"]
+    model.device = device
+    model.to(model.device)
+
+    return model
 
 
 def gen_model_path(model, optimizer, tag):
