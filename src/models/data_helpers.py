@@ -75,6 +75,7 @@ def load_data(data_dir, batch_size, num_workers=4, sample=True):
         "train": TRAIN_TRANSFORM,
         "valid": PREDICT_TRANSFORM,
         "test": PREDICT_TRANSFORM,
+    }
 
     image_datasets = {
         x: datasets.ImageFolder(data_dir / x, data_transforms[x])
