@@ -139,6 +139,7 @@ def train_model(model, optimizer, dataloaders, criterion, n_epochs, tag, models_
                 )
                 writer.add_scalars("Loss", {x: model.losses[x][-1] for x in PHASES}, epoch)
                 writer.add_scalars("Accuracy", {x: model.accuracies[x][-1] for x in PHASES}, epoch)
+                writer.flush()
 
                 if epoch_loss < best_loss:
                     best_loss = epoch_loss
