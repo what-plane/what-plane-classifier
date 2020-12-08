@@ -13,7 +13,7 @@ import io
 from io import BytesIO
 sys.path.insert(0, '..')  # noqa
 import src.models.model_helpers as mh  # noqa
-from src.models.data_helpers import load_data  # noqa
+from src.models.data_helpers import load_data, PREDICT_TRANSFORM  # noqa
 from src.models.train_model import train_model  # noqa
 from src.models.predict_model import test, predict  # noqa
 import src.models.visualise_helpers as vh  # noqa
@@ -32,25 +32,13 @@ imagenet_model.eval()
 
 
 def load_inference_model(model_path):
-    class_names = [""]*24
-    device = torch.device(
-        "cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model = mh.initialize_model("densenet161", class_names, hidden_units=1104,
-                                dropout=0.4, device=device, freeze_model=False)
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    model, optimizer = mh.load_checkpoint(model, optimizer, model_path)
+    model = mh.load_model(model_path)
     return model
 
 
 def transform_image(image_bytes):
-    my_transforms = transforms.Compose([transforms.Resize(255),
-                                        transforms.CenterCrop(224),
-                                        transforms.ToTensor(),
-                                        transforms.Normalize(
-                                            [0.485, 0.456, 0.406],
-                                            [0.229, 0.224, 0.225])])
     image = Image.open(io.BytesIO(image_bytes))
-    return my_transforms(image).unsqueeze(0)
+    return PREDICT_TRANSFORM(image).unsqueeze(0)
 
 
 def imagenet_pred(image_bytes):
@@ -82,17 +70,13 @@ def image_predict():
         buf.close()
         # Load ImageNet model to check image type
         class_id, class_name = imagenet_pred(image_bytes=img_bytes)
-        top5_p, top5_c = predict(file, imagenet_model, topk=5)
-        print(top5_c, top5_p)
         # If image is an airliner, load inference model
         if class_name != 'airliner':
             return render_template('index.html', class_name=class_name, class_id=class_id, filename=filename)
         else:
             model = load_inference_model(
-                '../models/airliners_net_densenet161_SGD.pth')
+                '../models\model_airliners_net_balanced_densenet161_SGD.pth')
             top_probs, top_classes = predict(file, model, topk=1)
-
-            print(top_probs, top_classes[0], filename)
             return render_template('index.html', class_name=top_classes[0], class_id=round(top_probs[0]*100, 1), filename=filename)
 
     return render_template('index.html')
