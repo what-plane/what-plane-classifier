@@ -37,7 +37,7 @@
               <div class="flex w-full h-full items-center justify-center">
                   <div class="flex flex-col items-center px-4 py-2 bg-opacity-80 rounded-lg bg-black tracking-wide border">
                     <div class="bg-opacity-80 overflow-hidden border-b-4 border-blue-500">
-                      <img src="{{url_for('static',filename='uploads/'+filename)}}" alt="Image" class="w-full object-cover h-72 border-4">
+                      <img src="{{url_for('static',filename='uploads/'+filename)}}" alt="Image" class="w-full object-contain h-72">
                       <div class="p-4 md:p-6">
                         <p class="font-mono font-semibold text-base text-white mb-4  leading-none ">Prediction</p>
                         <h3 class="font-semibold text-yellow-500 mb-2 text-xl leading-tight sm:leading-normal"><span class="text-red-500"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></span> Looks like you uploaded a {{class_name}}, not an airplane!</h3>
@@ -53,7 +53,7 @@
               <div class="flex w-full h-full items-center justify-center">
                   <div class="flex flex-col items-center px-4 py-2 bg-opacity-80 rounded-lg bg-black tracking-wide border">
                     <div class="bg-opacity-80 overflow-hidden border-b-4 border-blue-500">
-                      <img src="{{url_for('static',filename='uploads/'+filename)}}" alt="Image" class="w-full object-cover h-72 border-4">
+                      <img src="{{url_for('static',filename='uploads/'+filename)}}" alt="Image" class="w-full object-contain h-72">
                       <div class="p-4 md:p-6">
                         <p class="font-mono font-semibold text-base text-white mb-4  leading-none ">Prediction</p>
                         <h3 class="font-semibold text-yellow-500 mb-2 text-xl leading-tight sm:leading-normal">{{class_name}}</h3>

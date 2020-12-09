@@ -65,7 +65,7 @@ def image_predict():
             return render_template('index.html', class_name=class_names[0], class_id=str(class_ids[0]), filename=filename)
         else:
             model = load_inference_model(
-                '../models/model_airliners_net_balanced_densenet161_SGD.pth')
+                '../models/model_ash_densenet161_SGD.pth')
             top_probs, top_classes = predict(file, model, topk=1)
             return render_template('index.html', class_name=top_classes[0], class_id=round(top_probs[0]*100, 1), filename=filename)
 
