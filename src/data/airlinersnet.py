@@ -23,6 +23,10 @@ class airlinersConnector:
             "https": None,
         }
 
+        self._headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
+        }
+
         self._permitted_users = info_dict["permitted_users"]
         self._manufacturer_dict = info_dict["manufacturers"]
 
@@ -66,7 +70,7 @@ class airlinersConnector:
 
     def _fetch_search_page(self, ac_manufacturer, user, page):
         requests_url = self._base_url + self._search_ext.format(manu=ac_manufacturer, user=user, page=page)
-        init_page = requests.get(requests_url, proxies=self._proxies)
+        init_page = requests.get(requests_url, proxies=self._proxies, headers=self._headers)
         soup = BeautifulSoup(init_page.text, 'html.parser')
         return soup
 
@@ -133,3 +137,17 @@ class airlinersConnector:
             output_result.append(this_output)
 
         return output_result
+
+
+    @staticmethod
+    def get_image_from_url(base_url, url, outfile_path, proxies, headers):
+        img_page_url = base_url[:-1] + url
+        photo_page = requests.get(img_page_url, proxies=proxies, headers=headers)
+        soup = BeautifulSoup(photo_page.text, 'html.parser')
+        img_src = soup.find("div", class_="pdp-image-wrapper").find("img")["src"]
+        img_src = img_src.split("?")[0]
+
+        photo = requests.get(img_src, proxies=proxies, headers=headers)
+        outfile_path.write_bytes(photo.content)
+
+        return
