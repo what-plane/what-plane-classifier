@@ -21,7 +21,7 @@ import src.models.visualise_helpers as vh  # noqa
 
 app = Flask(__name__)
 
-with open("./data/imagenet_class_index.json") as f:
+with open("./imagenet_class_index.json") as f:
     imagenet_class_index = json.load(f)
 
 imagenet_model = mh.initialize_model(
