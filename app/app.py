@@ -42,7 +42,7 @@ def transform_image(image_bytes):
 @app.route('/predict', methods=['GET', 'POST'])
 def image_predict():
     if request.method == 'POST':
-        file = request.files['file']
+        file = request.files['image']
         class_ids, class_names = predict(file, imagenet_model, topk=5)
         # If image is an airliner, load inference model
         if 'airliner' not in class_names:
