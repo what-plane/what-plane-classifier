@@ -28,11 +28,7 @@ imagenet_model = mh.initialize_model(
     "densenet161", [item[1] for item in list(imagenet_class_index.values())], replace_classifier=False)
 imagenet_model.eval()
 
-
-def load_inference_model(model_path):
-    model = mh.load_model(model_path)
-    return model
-
+airliner_model = mh.load_model('../models/model_ash_densenet161_SGD.pth')
 
 def transform_image(image_bytes):
     image = Image.open(io.BytesIO(image_bytes))
@@ -48,11 +44,9 @@ def image_predict():
         if 'airliner' not in class_names:
             return jsonify({'class_name': class_names[0], 'class_id': str(class_ids[0])})
         else:
-            model = load_inference_model(
-                '../models/model_ash_densenet161_SGD.pth')
-            top_probs, top_classes = predict(file, model, topk=1)
+            top_probs, top_classes = predict(file, airliner_model, topk=1)
             return jsonify({'class_name': top_classes[0], 'class_pred': round(top_probs[0]*100, 1)})
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=80)
+    app.run(host="0.0.0.0", port=5000)
