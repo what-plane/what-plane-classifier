@@ -121,7 +121,7 @@ if __name__ == "__main__":
         all_df.groupby("Class").apply(sample_class, n_samples=1000).reset_index(drop=True)
     )
 
-    RAW_IMG_PATH = DATA_PATH / "/".join(["raw", "airlinersnet_test"])
+    RAW_IMG_PATH = DATA_PATH / "/".join(["raw", "airlinersnet"])
 
     create_dir(RAW_IMG_PATH)
 
