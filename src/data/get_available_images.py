@@ -70,8 +70,7 @@ def create_dir(path):
         path.mkdir()
     return
 
-
-def fetch_photo(row, raw_path, base_url, headers, proxies):
+def fetch_single_photo(row, raw_path, base_url, headers, proxies):
     img_path = raw_path / "/".join([row["Set"], row["Class"], str(row["PhotoId"]) + ".jpg"])
     if not img_path.exists():
         airlinersConnector.get_image_from_url(base_url, row["URL"], img_path, proxies, headers)
@@ -82,8 +81,12 @@ def fetch_photo(row, raw_path, base_url, headers, proxies):
 if __name__ == "__main__":
     __spec__ = None
 
+    DATASET_NAME = "airlinersnet"
+
     BASE_PATH = Path(".")
     DATA_PATH = Path(".") / "data"
+    RAW_IMG_PATH = DATA_PATH / "/".join(["raw", DATASET_NAME])
+
     with open(BASE_PATH / "src/data/airlinersnet.json") as json_data_file:
         info_dict = json.load(json_data_file)
 
@@ -121,8 +124,6 @@ if __name__ == "__main__":
         all_df.groupby("Class").apply(sample_class, n_samples=1000).reset_index(drop=True)
     )
 
-    RAW_IMG_PATH = DATA_PATH / "/".join(["raw", "airlinersnet"])
-
     create_dir(RAW_IMG_PATH)
 
     for dataset in selected_samples["Set"].unique():
@@ -137,20 +138,15 @@ if __name__ == "__main__":
     img_to_fetch = selected_samples.to_dict(orient="records")
 
     fetch_photo_func = partial(
-        fetch_photo,
+        fetch_single_photo,
         raw_path=RAW_IMG_PATH,
         base_url=ac._base_url,
         headers=ac._headers,
         proxies=ac._proxies,
     )
 
-    process_map(fetch_photo_func, img_to_fetch)
+    process_map(fetch_photo_func, img_to_fetch, chunksize=200)
 
-    def check_img_exists(row):
-        img_path = RAW_IMG_PATH / "/".join(
-            [row["Set"], str(row["Class"]), str(row["PhotoId"]) + ".jpg"]
-        )
-        return img_path.exists()
+    selected_samples["StillExists"] = True
 
-    # Check deleted photos
-    selected_samples["StillExists"] = selected_samples.apply(check_img_exists, axis=1)
+    selected_samples.to_pickle(RAW_IMG_PATH / "airlinersnet_catalog.pkl")
