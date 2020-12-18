@@ -60,7 +60,7 @@ def sample_class(class_df, n_samples=1000, train_test_val_split=(0.6, 0.2, 0.2))
 
     class_df.loc[train_idx, "Set"] = "train"
     class_df.loc[test_idx, "Set"] = "test"
-    class_df.loc[val_idx, "Set"] = "val"
+    class_df.loc[val_idx, "Set"] = "valid"
 
     return class_df
 
@@ -72,7 +72,7 @@ def create_dir(path):
 
 
 def fetch_photo(row, raw_path, base_url, headers, proxies):
-    img_path = raw_path / "/".join([row["Set"], str(row["ClassID"]), str(row["PhotoId"]) + ".jpg"])
+    img_path = raw_path / "/".join([row["Set"], row["Class"], str(row["PhotoId"]) + ".jpg"])
     if not img_path.exists():
         airlinersConnector.get_image_from_url(base_url, row["URL"], img_path, proxies, headers)
 
@@ -108,13 +108,10 @@ if __name__ == "__main__":
     all_df["PhotoId"] = pd.to_numeric(all_df["PhotoId"]).astype("Int32")
 
     all_df["Class"] = "Unknown"
-    all_df["ClassID"] = -1
+
     for ac_class, class_info in ACTYPE_DICT.items():
         this_class_loc = all_df["ACType"].str.contains(class_info["match_regex"], regex=True)
         all_df.loc[this_class_loc, "Class"] = ac_class
-        all_df.loc[this_class_loc, "ClassID"] = int(class_info["class_id"])
-
-    all_df["ClassID"] = all_df["ClassID"].astype("Int32")
 
     all_df["Date"] = pd.to_datetime(all_df["Date"], errors="coerce")
 
@@ -124,7 +121,7 @@ if __name__ == "__main__":
         all_df.groupby("Class").apply(sample_class, n_samples=1000).reset_index(drop=True)
     )
 
-    RAW_IMG_PATH = DATA_PATH / "/".join(["raw", "airlinersnet"])
+    RAW_IMG_PATH = DATA_PATH / "/".join(["raw", "airlinersnet_test"])
 
     create_dir(RAW_IMG_PATH)
 
@@ -134,7 +131,7 @@ if __name__ == "__main__":
 
     for dataset in selected_samples["Set"].unique():
         for ac_class in ACTYPE_DICT.keys():
-            folder_path = RAW_IMG_PATH / "/".join([dataset, str(ACTYPE_DICT[ac_class]["class_id"])])
+            folder_path = RAW_IMG_PATH / "/".join([dataset, ac_class])
             create_dir(folder_path)
 
     img_to_fetch = selected_samples.to_dict(orient="records")
@@ -151,7 +148,7 @@ if __name__ == "__main__":
 
     def check_img_exists(row):
         img_path = RAW_IMG_PATH / "/".join(
-            [row["Set"], str(row["ClassID"]), str(row["PhotoId"]) + ".jpg"]
+            [row["Set"], str(row["Class"]), str(row["PhotoId"]) + ".jpg"]
         )
         return img_path.exists()
 
