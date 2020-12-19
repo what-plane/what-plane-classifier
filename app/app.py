@@ -1,23 +1,16 @@
-from flask import Flask, request, jsonify
-from PIL import Image
-from werkzeug.utils import secure_filename
-import torchvision.transforms as transforms
-from torchvision import models
-import torch
-import torch.optim as optim
 from pathlib import Path
 import sys
-import os
 import json
-import io
-from io import BytesIO
-sys.path.insert(0, '..')  # noqa
-import src.models.model_helpers as mh  # noqa
-from src.models.data_helpers import load_data, PREDICT_TRANSFORM  # noqa
-from src.models.train_model import train_model  # noqa
-from src.models.predict_model import test, predict  # noqa
-import src.models.visualise_helpers as vh  # noqa
 
+from flask import Flask, request, jsonify
+from PIL import Image
+import torch
+
+sys.path.insert(0, '..')
+
+import src.models.model_helpers as mh
+from src.models.data_helpers import PREDICT_TRANSFORM
+from src.models.predict_model import predict
 
 app = Flask(__name__)
 
@@ -28,16 +21,11 @@ imagenet_model = mh.initialize_model(
     "densenet161", [item[1] for item in list(imagenet_class_index.values())], replace_classifier=False)
 imagenet_model.eval()
 
-airliner_model = mh.load_model('../models/model_ash_densenet161_SGD.pth')
+airliner_model = mh.load_model('../models/model.pth')
 
-def transform_image(image_bytes):
-    image = Image.open(io.BytesIO(image_bytes))
-    return PREDICT_TRANSFORM(image).unsqueeze(0)
-
-
-@app.route('/predict', methods=['GET', 'POST'])
+@app.route('/predict', methods=['GET'])
 def image_predict():
-    if request.method == 'POST':
+    if request.method == 'GET':
         file = request.files['image']
         class_ids, class_names = predict(file, imagenet_model, topk=5)
         # If image is an airliner, load inference model
