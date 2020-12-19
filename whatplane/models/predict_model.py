@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import matplotlib.pyplot as plt
 
 from .data_helpers import process_image_data, process_image_file
 
