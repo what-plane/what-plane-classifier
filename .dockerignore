@@ -2,4 +2,4 @@
 !requirements_app.txt
 !app/
 !src/
-!models/model_ash_densenet161_SGD.pth
+!entrypoint.sh
