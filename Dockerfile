@@ -1,7 +1,7 @@
 # Dockerfile for whatplane application
 FROM python:3.8.6-slim-buster
 
-ARG PYTHON_PACKAGES="flask==1.1.2 gunicorn==20.0.4"
+ARG PYTHON_PACKAGES="flask==1.1.2 gunicorn==20.0.4 azure-storage-blob==12.6.0"
 ARG APP_DIR="whatplane"
 ARG APT_DEPS="curl dumb-init"
 
@@ -19,7 +19,7 @@ RUN pip install --upgrade pip \
     && pip install --no-cache-dir ${PYTHON_PACKAGES}
 
 COPY app ${APP_DIR}/app
-COPY src ${APP_DIR}/src
+COPY src ${APP_DIR}/whatplane
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod a+x /entrypoint.sh
