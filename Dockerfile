@@ -3,12 +3,11 @@ FROM python:3.8.6-slim-buster
 
 ARG PYTHON_PACKAGES="flask==1.1.2 gunicorn==20.0.4 azure-storage-blob==12.6.0"
 ARG APP_DIR="whatplane"
-ARG APT_DEPS="curl dumb-init"
+ARG APT_DEPS="dumb-init"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
            ${APT_DEPS} \
-    && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -20,6 +19,7 @@ RUN pip install --upgrade pip \
 
 COPY app ${APP_DIR}/app
 COPY whatplane ${APP_DIR}/whatplane
+COPY scripts/app/ ${APP_DIR}/scripts/app/
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod a+x /entrypoint.sh
