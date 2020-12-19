@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class airlinersConnector:
+class AirlinersConnector:
     """
     # TODO write docstring for class
     """
