@@ -1,5 +1,5 @@
 **
 !requirements_app.txt
 !app/
-!src/
+!whatplane/
 !entrypoint.sh

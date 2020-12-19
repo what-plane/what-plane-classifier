@@ -5,9 +5,9 @@ INPUT_COMMAND="${1}"
 set -euo pipefail
 
 # Download the model from azure blob storage
-mkdir models
+mkdir ../models
 # TODO replace this with python API?
-az storage blob download -c models -f models/model.pth -n model.pth
+az storage blob download -c models -f ../models/model.pth -n model.pth
 
 if [[ ${INPUT_COMMAND} == "bash" ]]; then
     shift

@@ -19,7 +19,7 @@ RUN pip install --upgrade pip \
     && pip install --no-cache-dir ${PYTHON_PACKAGES}
 
 COPY app ${APP_DIR}/app
-COPY src ${APP_DIR}/whatplane
+COPY whatplane ${APP_DIR}/whatplane
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod a+x /entrypoint.sh

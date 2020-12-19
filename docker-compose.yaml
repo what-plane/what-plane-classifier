@@ -9,4 +9,4 @@ services:
       - "5000:5000"
     environment:
       - AZURE_STORAGE_CONNECTION_STRING=
-    command: ["python", "hw_app.py"]
+    command: ["python", "app.py"]
