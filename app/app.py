@@ -24,7 +24,7 @@ CONNECT_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 blob_service_client = BlobServiceClient.from_connection_string(CONNECT_STR)
 
 
-with open("./imagenet_class_index.json") as f:
+with open(CWD / "imagenet_class_index.json") as f:
     imagenet_class_index = json.load(f)
 
 imagenet_model = mh.initialize_model(
