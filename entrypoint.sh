@@ -5,7 +5,7 @@ INPUT_COMMAND="${1}"
 set -euo pipefail
 
 # Download the model from azure blob storage
-mkdir ../models
+mkdir -p ../models
 python ../scripts/app/fetch_model.py model.pth ../models/model.pth
 
 if [[ ${INPUT_COMMAND} == "bash" ]]; then
