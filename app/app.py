@@ -62,7 +62,13 @@ def prepare_response(probs, class_names, predictor):
     return PredictionSet(predictions=predictions, topk=len(predictions), predictor=predictor)
 
 
-@app.get("/predict/{filename}", response_model=PredictionSet, status_code=200, tags=["predict"])
+@app.get(
+    "/predict/{filename}",
+    response_model=PredictionSet,
+    status_code=200,
+    tags=["predict"],
+    responses={404: {"description": "File not found or is the wrong type"}},
+)
 async def image_prediction_api(
     filename: str = Path(
         ..., title="The filename of the image uploaded by the frontend application", min_length=36
