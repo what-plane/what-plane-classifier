@@ -23,6 +23,9 @@ CLASSIFIED_IMAGE_CONTAINER = "uploaded-images-airliners"
 CONNECT_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 blob_service_client = BlobServiceClient.from_connection_string(CONNECT_STR)
 
+TEMPLATE_RESPONSE = {"data": {"predictions": [], "topk": 0}}
+
+TEMPLATE_PRED = {"class_name": "", "class_pred": 0.00}
 
 with open(CWD / "imagenet_class_index.json") as f:
     imagenet_class_index = json.load(f)
@@ -35,9 +38,21 @@ imagenet_model = mh.initialize_model(
 airliner_model = mh.load_model(CWD / "../models/model.pth")
 
 
+def prepare_response(probs, class_names):
+    predictions = [
+        {"class_name": class_name, "class_prob": round(probs[i], 3)}
+        for i, class_name in enumerate(class_names)
+    ]
+    response = TEMPLATE_RESPONSE.copy()
+    response["data"]["predictions"] = predictions
+    response["data"]["topk"] = len(predictions)
+    return response
+
+
 @app.errorhandler(404)
 def resource_not_found(e):
     return jsonify(error=str(e)), 404
+
 
 @app.route("/predict/<string:filename>", methods=["GET"])
 def image_predict_api(filename):
@@ -59,17 +74,21 @@ def image_predict_api(filename):
 
     image = Image.open(io.BytesIO(uploaded_blob.download_blob().readall()))
 
-    class_ids, class_names = predict_image_data(image, imagenet_model, topk=5)
+    imagenet_probs, imagenet_classes = predict_image_data(image, imagenet_model, topk=5)
+
+    # Take only classes with prob > 0.5
+    imagenet_likely_class = [imagenet_classes[i] for i, prob in enumerate(imagenet_probs) if prob > 0.5]
+
     # If image is an airliner, load inference model
-    if "airliner" not in class_names:
-        result = jsonify({"class_name": class_names[0], "class_id": str(class_ids[0])})
+    if "airliner" not in imagenet_likely_class:
+        result = jsonify(prepare_response(imagenet_probs[0], imagenet_classes[0]))
     else:
-        top_probs, top_classes = predict_image_data(image, airliner_model, topk=1)
-        result = jsonify({"class_name": top_classes[0], "class_pred": round(top_probs[0] * 100, 1)})
+        airlinernet_probs, airlinernet_classes = predict_image_data(image, airliner_model, topk=1)
+        result = jsonify(prepare_response(airlinernet_probs, airlinernet_classes))
 
         # Transfer blob to classified image container
         airliner_blob = blob_service_client.get_blob_client(
-            container=CLASSIFIED_IMAGE_CONTAINER, blob="/".join([top_classes[0], filename])
+            container=CLASSIFIED_IMAGE_CONTAINER, blob="/".join([airlinernet_classes[0], filename])
         )
         airliner_blob.start_copy_from_url(uploaded_blob.url)
 
