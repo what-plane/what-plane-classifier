@@ -23,7 +23,7 @@ CLASSIFIED_IMAGE_CONTAINER = "uploaded-images-airliners"
 CONNECT_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 blob_service_client = BlobServiceClient.from_connection_string(CONNECT_STR)
 
-TEMPLATE_RESPONSE = {"data": {"predictions": [], "topk": 0}}
+TEMPLATE_RESPONSE = {"data": {"predictions": [], "topk": 0, "predictor": ""}}
 
 TEMPLATE_PRED = {"class_name": "", "class_pred": 0.00}
 
@@ -35,10 +35,10 @@ imagenet_model = mh.initialize_model(
     [item[1] for item in list(imagenet_class_index.values())],
     replace_classifier=False,
 )
-airliner_model = mh.load_model(CWD / "../models/model.pth")
+whatplane_model = mh.load_model(CWD / "../models/model.pth")
 
 
-def prepare_response(probs, class_names):
+def prepare_response(probs, class_names, predictor):
     predictions = [
         {"class_name": class_name, "class_prob": round(probs[i], 3)}
         for i, class_name in enumerate(class_names)
@@ -46,6 +46,7 @@ def prepare_response(probs, class_names):
     response = TEMPLATE_RESPONSE.copy()
     response["data"]["predictions"] = predictions
     response["data"]["topk"] = len(predictions)
+    response["data"]["predictor"] = predictor
     return response
 
 
@@ -81,14 +82,14 @@ def image_predict_api(filename):
 
     # If image is an airliner, load inference model
     if "airliner" not in imagenet_likely_class:
-        result = jsonify(prepare_response(imagenet_probs[0], imagenet_classes[0]))
+        result = jsonify(prepare_response(imagenet_probs[0], imagenet_classes[0], "imagenet"))
     else:
-        airlinernet_probs, airlinernet_classes = predict_image_data(image, airliner_model, topk=1)
-        result = jsonify(prepare_response(airlinernet_probs, airlinernet_classes))
+        whatplane_probs, whatplane_classes = predict_image_data(image, whatplane_model, topk=1)
+        result = jsonify(prepare_response(whatplane_probs, whatplane_classes, "whatplane"))
 
         # Transfer blob to classified image container
         airliner_blob = blob_service_client.get_blob_client(
-            container=CLASSIFIED_IMAGE_CONTAINER, blob="/".join([airlinernet_classes[0], filename])
+            container=CLASSIFIED_IMAGE_CONTAINER, blob="/".join([whatplane_classes[0], filename])
         )
         airliner_blob.start_copy_from_url(uploaded_blob.url)
 
