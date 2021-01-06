@@ -3,18 +3,21 @@ import json
 from pathlib import Path
 import math
 from functools import partial
+import sys
+
 
 from tqdm.contrib.concurrent import process_map
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from airlinersnet import airlinersConnector
-from actype_classes import ACTYPE_DICT
+sys.path.insert(0, '..')
+
+from whatplane.data.airlinersnet import AirlinersConnector
+from whatplane.data.actype_classes import ACTYPE_DICT
 
 SEED = 42
 np.random.seed(seed=SEED)
-
 
 def sample_class(class_df, n_samples=1000, train_test_val_split=(0.6, 0.2, 0.2)):
 
@@ -60,21 +63,19 @@ def sample_class(class_df, n_samples=1000, train_test_val_split=(0.6, 0.2, 0.2))
 
     class_df.loc[train_idx, "Set"] = "train"
     class_df.loc[test_idx, "Set"] = "test"
-    class_df.loc[val_idx, "Set"] = "val"
+    class_df.loc[val_idx, "Set"] = "valid"
 
     return class_df
-
 
 def create_dir(path):
     if not path.exists():
         path.mkdir()
     return
 
-
-def fetch_photo(row, raw_path, base_url, headers, proxies):
-    img_path = raw_path / "/".join([row["Set"], str(row["ClassID"]), str(row["PhotoId"]) + ".jpg"])
+def fetch_single_photo(row, raw_path, base_url, headers, proxies):
+    img_path = raw_path / "/".join([row["Set"], row["Class"], str(row["PhotoId"]) + ".jpg"])
     if not img_path.exists():
-        airlinersConnector.get_image_from_url(base_url, row["URL"], img_path, proxies, headers)
+        AirlinersConnector.get_image_from_url(base_url, row["URL"], img_path, proxies, headers)
 
     return
 
@@ -82,12 +83,17 @@ def fetch_photo(row, raw_path, base_url, headers, proxies):
 if __name__ == "__main__":
     __spec__ = None
 
+    DATASET_NAME = "airlinersnet"
+    N_SAMPLES = 1000
+
     BASE_PATH = Path(".")
     DATA_PATH = Path(".") / "data"
-    with open(BASE_PATH / "src/data/airlinersnet.json") as json_data_file:
+    RAW_IMG_PATH = DATA_PATH / "/".join(["raw", DATASET_NAME])
+
+    with open(BASE_PATH / "whatplane/data/airlinersnet.json") as json_data_file:
         info_dict = json.load(json_data_file)
 
-    ac = airlinersConnector(info_dict)
+    ac = AirlinersConnector(info_dict)
 
     output_df_list = []
 
@@ -108,23 +114,18 @@ if __name__ == "__main__":
     all_df["PhotoId"] = pd.to_numeric(all_df["PhotoId"]).astype("Int32")
 
     all_df["Class"] = "Unknown"
-    all_df["ClassID"] = -1
+
     for ac_class, class_info in ACTYPE_DICT.items():
         this_class_loc = all_df["ACType"].str.contains(class_info["match_regex"], regex=True)
         all_df.loc[this_class_loc, "Class"] = ac_class
-        all_df.loc[this_class_loc, "ClassID"] = int(class_info["class_id"])
-
-    all_df["ClassID"] = all_df["ClassID"].astype("Int32")
 
     all_df["Date"] = pd.to_datetime(all_df["Date"], errors="coerce")
 
     all_df = all_df[all_df["Class"] != "Unknown"].dropna(axis=0, how="any")
 
     selected_samples = (
-        all_df.groupby("Class").apply(sample_class, n_samples=1000).reset_index(drop=True)
+        all_df.groupby("Class").apply(sample_class, n_samples=N_SAMPLES).reset_index(drop=True)
     )
-
-    RAW_IMG_PATH = DATA_PATH / "/".join(["raw", "airlinersnet"])
 
     create_dir(RAW_IMG_PATH)
 
@@ -134,26 +135,21 @@ if __name__ == "__main__":
 
     for dataset in selected_samples["Set"].unique():
         for ac_class in ACTYPE_DICT.keys():
-            folder_path = RAW_IMG_PATH / "/".join([dataset, str(ACTYPE_DICT[ac_class]["class_id"])])
+            folder_path = RAW_IMG_PATH / "/".join([dataset, ac_class])
             create_dir(folder_path)
 
     img_to_fetch = selected_samples.to_dict(orient="records")
 
     fetch_photo_func = partial(
-        fetch_photo,
+        fetch_single_photo,
         raw_path=RAW_IMG_PATH,
         base_url=ac._base_url,
         headers=ac._headers,
         proxies=ac._proxies,
     )
 
-    process_map(fetch_photo_func, img_to_fetch)
+    process_map(fetch_photo_func, img_to_fetch, chunksize=200)
 
-    def check_img_exists(row):
-        img_path = RAW_IMG_PATH / "/".join(
-            [row["Set"], str(row["ClassID"]), str(row["PhotoId"]) + ".jpg"]
-        )
-        return img_path.exists()
+    selected_samples["StillExists"] = True
 
-    # Check deleted photos
-    selected_samples["StillExists"] = selected_samples.apply(check_img_exists, axis=1)
+    selected_samples.to_pickle(RAW_IMG_PATH / "airlinersnet_catalog.pkl")

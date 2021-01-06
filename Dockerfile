@@ -1,23 +1,33 @@
 # Dockerfile for whatplane application
 FROM python:3.8.6-slim-buster
 
-ARG PYTHON_PACKAGES="flask==1.1.2 matplotlib numpy tqdm scikit-learn tensorboard"
+ARG PYTHON_PACKAGES="flask==1.1.2 gunicorn==20.0.4 azure-storage-blob==12.6.0"
 ARG APP_DIR="whatplane"
+ARG APT_DEPS="dumb-init"
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+           ${APT_DEPS} \
+    && apt-get autoremove -yqq --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip
-
-RUN pip install --user torch==1.7.0+cpu torchvision==0.8.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
-
-RUN pip install ${PYTHON_PACKAGES}
+RUN pip install --upgrade pip \
+    &&  pip install --no-cache-dir torch==1.7.0+cpu torchvision==0.8.1+cpu \
+    -f https://download.pytorch.org/whl/torch_stable.html \
+    && pip install --no-cache-dir ${PYTHON_PACKAGES}
 
 COPY app ${APP_DIR}/app
-# TODO replace this!
-COPY models/model_ash_densenet161_SGD.pth ${APP_DIR}/models/model_ash_densenet161_SGD.pth
-COPY src ${APP_DIR}/src
+COPY whatplane ${APP_DIR}/whatplane
+COPY scripts/app/ ${APP_DIR}/scripts/app/
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod a+x /entrypoint.sh
 
 EXPOSE 5000
 
 WORKDIR "${APP_DIR}/app"
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "/entrypoint.sh"]
 
 CMD ["python", "app.py"]
