@@ -7,6 +7,7 @@ from azure.storage.blob import BlobServiceClient
 MODEL_CONTAINER = "models"
 CONNECT_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
+
 def fetch_model(blob_name, out_filepath):
 
     blob_service_client = BlobServiceClient.from_connection_string(CONNECT_STR)
@@ -17,6 +18,7 @@ def fetch_model(blob_name, out_filepath):
 
     return
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("model_name", type=str, help="Name of the model blob in Azure")
@@ -25,8 +27,8 @@ if __name__ == "__main__":
 
     out_filepath = Path(args.out_filepath)
 
-    if out_filepath.exists():
-        raise RuntimeError(f"{out_filepath} already exists")
+    if os.getenv("AZURE_STORAGE_CONNECTION_STRING", default="") == "":
+        raise RuntimeError("Please set the AZURE_STORAGE_CONNECTION_STRING environment variable")
 
     print(f"Downloading {args.model_name}...")
     fetch_model(args.model_name, out_filepath)
