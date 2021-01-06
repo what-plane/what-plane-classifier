@@ -82,7 +82,7 @@ def image_predict_api(filename):
 
     # If image is an airliner, load inference model
     if "airliner" not in imagenet_likely_class:
-        result = jsonify(prepare_response(imagenet_probs[0], imagenet_classes[0], "imagenet"))
+        result = jsonify(prepare_response([imagenet_probs[0]], [imagenet_classes[0]], "imagenet"))
     else:
         whatplane_probs, whatplane_classes = predict_image_data(image, whatplane_model, topk=1)
         result = jsonify(prepare_response(whatplane_probs, whatplane_classes, "whatplane"))
