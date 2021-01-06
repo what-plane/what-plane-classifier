@@ -2,7 +2,6 @@ from pathlib import Path
 import math
 
 import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
 
 from torchvision import datasets, transforms
@@ -55,7 +54,7 @@ def class_counts(dataset):
 
 
 def dataset_weights(dataset):
-    class_weights = 1/class_counts(dataset)
+    class_weights = 1 / class_counts(dataset)
     return class_weights[dataset.targets]
 
 
@@ -83,12 +82,20 @@ def load_data(data_dir, batch_size, num_workers=4, sample=True):
     }
 
     samplers = {
-        x: WeightedRandomSampler(dataset_weights(image_datasets[x]), len(image_datasets[x])) if sample else None
+        x: WeightedRandomSampler(dataset_weights(image_datasets[x]), len(image_datasets[x]))
+        if sample
+        else None
         for x in ["train", "valid", "test"]
     }
 
     dataloaders = {
-        x: DataLoader(image_datasets[x], sampler=samplers[x], batch_size=batch_size, shuffle=(not sample), num_workers=num_workers)
+        x: DataLoader(
+            image_datasets[x],
+            sampler=samplers[x],
+            batch_size=batch_size,
+            shuffle=(not sample),
+            num_workers=num_workers,
+        )
         for x in ["train", "valid", "test"]
     }
 
@@ -97,7 +104,20 @@ def load_data(data_dir, batch_size, num_workers=4, sample=True):
     return class_names, image_datasets, dataloaders
 
 
-def process_image(image_path):
+def process_image_file(image_path):
+    """[summary]
+
+    Args:
+        image_path ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    img_pil = Image.open(image_path)
+    return process_image_data(img_pil)
+
+
+def process_image_data(image_data):
     """Scales, crops, and normalizes a PIL image for a PyTorch model,
         returns an Numpy array
 
@@ -107,11 +127,10 @@ def process_image(image_path):
     Returns:
         [type]: [description]
     """
-    img_pil = Image.open(image_path)
 
     adjustments = PREDICT_TRANSFORM
 
-    img_tensor = adjustments(img_pil)
+    img_tensor = adjustments(image_data)
 
     return img_tensor
 

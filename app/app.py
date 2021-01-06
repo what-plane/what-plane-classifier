@@ -1,76 +1,100 @@
-from flask import Flask, request, render_template, jsonify, redirect
-from PIL import Image
-from werkzeug.utils import secure_filename
-import torchvision.transforms as transforms
-from torchvision import models
-import torch
-import torch.optim as optim
-from pathlib import Path
-import sys
 import os
-import json
 import io
-from io import BytesIO
-sys.path.insert(0, '..')  # noqa
-import src.models.model_helpers as mh  # noqa
-from src.models.data_helpers import load_data, PREDICT_TRANSFORM  # noqa
-from src.models.train_model import train_model  # noqa
-from src.models.predict_model import test, predict  # noqa
-import src.models.visualise_helpers as vh  # noqa
+import sys
+from pathlib import Path
+import json
 
+from flask import Flask, jsonify, abort
+from PIL import Image
+from azure.storage.blob import BlobServiceClient
+import torch
 
-UPLOAD_FOLDER = './static/uploads'
+sys.path.insert(0, "..")
+
+import whatplane.models.model_helpers as mh
+from whatplane.models.data_helpers import PREDICT_TRANSFORM
+from whatplane.models.predict_model import predict_image_data
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-with open("./data/imagenet_class_index.json") as f:
+CWD = Path(".")
+IMAGE_UPLOAD_CONTAINTER = "uploaded-images"
+CLASSIFIED_IMAGE_CONTAINER = "uploaded-images-airliners"
+CONNECT_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+blob_service_client = BlobServiceClient.from_connection_string(CONNECT_STR)
+
+TEMPLATE_RESPONSE = {"data": {"predictions": [], "topk": 0, "predictor": ""}}
+
+TEMPLATE_PRED = {"class_name": "", "class_pred": 0.00}
+
+with open(CWD / "imagenet_class_index.json") as f:
     imagenet_class_index = json.load(f)
 
 imagenet_model = mh.initialize_model(
-    "densenet161", [item[1] for item in list(imagenet_class_index.values())], replace_classifier=False)
-imagenet_model.eval()
+    "densenet161",
+    [item[1] for item in list(imagenet_class_index.values())],
+    replace_classifier=False,
+)
+whatplane_model = mh.load_model(CWD / "../models/model.pth")
 
 
-def load_inference_model(model_path):
-    model = mh.load_model(model_path)
-    return model
+def prepare_response(probs, class_names, predictor):
+    predictions = [
+        {"class_name": class_name, "class_prob": round(probs[i], 3)}
+        for i, class_name in enumerate(class_names)
+    ]
+    response = TEMPLATE_RESPONSE.copy()
+    response["data"]["predictions"] = predictions
+    response["data"]["topk"] = len(predictions)
+    response["data"]["predictor"] = predictor
+    return response
 
 
-def transform_image(image_bytes):
-    image = Image.open(io.BytesIO(image_bytes))
-    return PREDICT_TRANSFORM(image).unsqueeze(0)
+@app.errorhandler(404)
+def resource_not_found(e):
+    return jsonify(error=str(e)), 404
 
 
-@app.route('/', methods=['GET', 'POST'])
-def image_predict():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return redirect(request.url)
-        file = request.files['file']
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        img = Image.open(os.path.join(
-            app.config['UPLOAD_FOLDER'], filename))
-        buf = BytesIO()
-        img.save(buf, 'jpeg')
-        buf.seek(0)
-        buf.close()
-        # Load ImageNet model to check image type
-        class_ids, class_names = predict(file, imagenet_model, topk=5)
+@app.route("/predict/<string:filename>", methods=["GET"])
+def image_predict_api(filename):
 
-        print("imagenet:", class_ids, class_names)
-        # If image is an airliner, load inference model
-        if 'airliner' not in class_names:
-            return render_template('index.html', class_name=class_names[0], class_id=str(class_ids[0]), filename=filename)
-        else:
-            model = load_inference_model(
-                '../models/model_ash_densenet161_SGD.pth')
-            top_probs, top_classes = predict(file, model, topk=1)
-            return render_template('index.html', class_name=top_classes[0], class_id=round(top_probs[0]*100, 1), filename=filename)
+    if len(filename) == 0:
+        abort(404, description="Resource not found")
 
-    return render_template('index.html')
+    uploaded_blob = blob_service_client.get_blob_client(
+        container=IMAGE_UPLOAD_CONTAINTER, blob=filename
+    )
+
+    if not uploaded_blob.exists():
+        abort(404, description="Resource not found")
+
+    content_type = uploaded_blob.get_blob_properties()["content_settings"]["content_type"]
+
+    if content_type not in ["image/jpeg", "image/png"]:
+        abort(404, description=f"File type {content_type} not supported")
+
+    image = Image.open(io.BytesIO(uploaded_blob.download_blob().readall()))
+
+    imagenet_probs, imagenet_classes = predict_image_data(image, imagenet_model, topk=5)
+
+    # Take only classes with prob > 0.5
+    imagenet_likely_class = [imagenet_classes[i] for i, prob in enumerate(imagenet_probs) if prob > 0.5]
+
+    # If image is an airliner, load inference model
+    if "airliner" not in imagenet_likely_class:
+        result = jsonify(prepare_response([imagenet_probs[0]], [imagenet_classes[0]], "imagenet"))
+    else:
+        whatplane_probs, whatplane_classes = predict_image_data(image, whatplane_model, topk=1)
+        result = jsonify(prepare_response(whatplane_probs, whatplane_classes, "whatplane"))
+
+        # Transfer blob to classified image container
+        airliner_blob = blob_service_client.get_blob_client(
+            container=CLASSIFIED_IMAGE_CONTAINER, blob="/".join([whatplane_classes[0], filename])
+        )
+        airliner_blob.start_copy_from_url(uploaded_blob.url)
+
+    return result
 
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=80)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
