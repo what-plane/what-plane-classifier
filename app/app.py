@@ -69,7 +69,7 @@ def prepare_response(probs, class_names, predictor):
     tags=["predict"],
     responses={404: {"description": "File not found or is the wrong type"}},
 )
-async def image_prediction_api(
+def image_prediction_api(
     filename: str = Path(
         ..., title="The filename of the image uploaded by the frontend application", min_length=36
     ),
@@ -112,6 +112,19 @@ async def image_prediction_api(
 
     return response
 
+class HealthSet(BaseModel):
+    model_version: str
+    ping: str
+
+@app.get(
+    "/health",
+    response_model=HealthSet,
+    status_code=200,
+    tags=["health"],
+)
+def health_check():
+    model_version = getattr(whatplane_model, "version", "Not Set")
+    return HealthSet(model_version=model_version, ping="Pong!")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000)
