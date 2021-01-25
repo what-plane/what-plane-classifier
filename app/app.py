@@ -112,19 +112,19 @@ def image_prediction_api(
 
     return response
 
+
 class HealthSet(BaseModel):
     model_version: str
     ping: str
 
+
 @app.get(
-    "/health",
-    response_model=HealthSet,
-    status_code=200,
-    tags=["health"],
+    "/health", response_model=HealthSet, status_code=200, tags=["health"],
 )
 def health_check():
     model_version = getattr(whatplane_model, "version", "Not Set")
     return HealthSet(model_version=model_version, ping="Pong!")
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000)
