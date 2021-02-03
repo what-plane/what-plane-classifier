@@ -1,7 +1,7 @@
 # Dockerfile for whatplane application
 FROM python:3.8.6-slim-buster
 
-ARG PYTHON_PACKAGES="flask==1.1.2 gunicorn==20.0.4 azure-storage-blob==12.6.0"
+ARG PYTHON_PACKAGES="fastapi==0.63.0 uvicorn[standard]==0.13.3 azure-storage-blob==12.6.0"
 ARG APP_DIR="whatplane"
 ARG APT_DEPS="dumb-init"
 
