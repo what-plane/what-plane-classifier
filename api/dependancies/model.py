@@ -11,9 +11,7 @@ from whatplane.models.predict_model import predict_image_data
 
 BASE_DIR = Path(".")
 
-TEMPLATE_PRED = {"class_name": "", "class_pred": 0.00}
-
-with open(BASE_DIR/ "api/imagenet_class_index.json") as f:
+with open(BASE_DIR / "api/imagenet_class_index.json") as f:
     imagenet_class_index = json.load(f)
 
 imagenet_model = mh.initialize_model(
@@ -21,7 +19,7 @@ imagenet_model = mh.initialize_model(
     [item[1] for item in list(imagenet_class_index.values())],
     replace_classifier=False,
 )
-whatplane_model = mh.load_model(BASE_DIR / "/models/model.pth")
+whatplane_model = mh.load_model(BASE_DIR / "models/model.pth")
 
 
 def predict_imagenet(image, topk):

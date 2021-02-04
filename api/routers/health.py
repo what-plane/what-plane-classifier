@@ -1,10 +1,10 @@
-
 from fastapi import APIRouter, Path, Query
 from pydantic import BaseModel
 
 from ..dependancies import model
 
 router = APIRouter()
+
 
 class HealthSet(BaseModel):
     model_version: str
