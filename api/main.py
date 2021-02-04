@@ -1,15 +1,12 @@
-import uvicorn
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers import predict, health
 
-ORIGINS = [
-    "http://localhost:3000"
-    ]
-
-ORIGINS_REGEX = r"https://.*whatplaneis\.it"
+ORIGINS = os.getenv("CORS_ORIGINS").split(",")
+ORIGINS_REGEX = os.getenv("CORS_ORIGINS_REGEX")
 
 app = FastAPI(
     title="WhatPlane", description="Recognising Aircraft with Deep Learning", version="0.3.1"

@@ -9,4 +9,6 @@ services:
       - "5000:5000"
     environment:
       - AZURE_STORAGE_CONNECTION_STRING=
+      - CORS_ORIGINS=http://localhost:3000,https://whatplaneis.it,https://www.whatplaneis.it
+      - CORS_ORIGINS_REGEX=https://.*azurestaticapps\.net
     command: ["start-uvicorn"]
