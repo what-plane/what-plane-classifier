@@ -9,7 +9,7 @@ ORIGINS = os.getenv("CORS_ORIGINS").split(",")
 ORIGINS_REGEX = os.getenv("CORS_ORIGINS_REGEX")
 
 app = FastAPI(
-    title="WhatPlane", description="Recognising Aircraft with Deep Learning", version="0.3.1"
+    title="WhatPlane", description="Recognising Aircraft with Deep Learning", version="0.3.2"
 )
 
 app.include_router(predict.router)

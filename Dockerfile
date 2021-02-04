@@ -30,4 +30,4 @@ WORKDIR "${APP_DIR}"
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/entrypoint.sh"]
 
-CMD ["start-uvicorn", "--workers", "2"]
+CMD ["start-uvicorn"]
