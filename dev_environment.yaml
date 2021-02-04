@@ -8,8 +8,8 @@ dependencies:
   - python=3.8
   - pip
   # External Package Requirements
-  - pytorch=1.7.0
-  - torchvision=0.8.1
+  - pytorch=1.7.1
+  - torchvision=0.8.2
   - cudatoolkit=11
   - beautifulsoup4=4.9.3
   - pandas=1.1.4
@@ -18,6 +18,9 @@ dependencies:
   - matplotlib
   - scikit-learn
   - tqdm
+  - fastapi
+  - uvicorn
+  - azure-storage-blob
   # Devops Requirements
   - jupyter
   - pylint
