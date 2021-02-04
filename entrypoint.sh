@@ -6,7 +6,8 @@ set -euo pipefail
 
 # Download the model from azure blob storage
 mkdir -p models
-python scripts/api/fetch_model.py model.pth models/model.pth
+python scripts/api/fetch_model_pytorch.py densenet161
+python scripts/api/fetch_model_azure.py model.pth models/model.pth
 
 if [[ ${INPUT_COMMAND} == "bash" ]]; then
     shift
