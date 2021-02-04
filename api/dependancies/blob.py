@@ -39,7 +39,7 @@ class ImageBlobClient:
 
     def copy_classified_blob(self, likely_class):
         airliner_blob = blob_service_client.get_blob_client(
-            container=CLASSIFIED_IMAGE_CONTAINER, blob="/".join([likely_class, self.uuid])
+            container=CLASSIFIED_IMAGE_CONTAINER, blob="/".join([likely_class, self.UUID])
         )
         airliner_blob.start_copy_from_url(self.uploaded_blob.url)
 
