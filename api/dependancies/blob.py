@@ -27,7 +27,7 @@ class ImageBlobClient:
         content_type = uploaded_blob.get_blob_properties()["content_settings"]["content_type"]
 
         if content_type not in ["image/jpeg", "image/png"]:
-            raise HTTPException(status_code=404, detail=f"File type {content_type} not supported")
+            raise HTTPException(status_code=415, detail=f"File type {content_type} not supported")
 
         return uploaded_blob
 
