@@ -7,7 +7,7 @@ ARG APT_DEPS="dumb-init"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-           ${APT_DEPS} \
+    ${APT_DEPS} \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
