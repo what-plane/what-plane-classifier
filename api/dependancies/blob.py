@@ -69,7 +69,8 @@ class ImageBlobClient:
 
     def get_uploaded_image(self):
 
-        image = Image.open(io.BytesIO(self.uploaded_blob.download_blob().readall()))
+        img_bytes = io.BytesIO(self.uploaded_blob.download_blob().readall())
+        image = Image.open(img_bytes).convert("RGB")
 
         return image
 
