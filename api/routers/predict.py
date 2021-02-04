@@ -50,7 +50,7 @@ async def image_prediction_api(
     if "airliner" not in imagenet_likely_class:
         response = prepare_response(imagenet_probs[:topk], imagenet_classes[:topk], "imagenet")
     else:
-        whatplane_probs, whatplane_classes = model.predict_imagenet(image, topk=topk)
+        whatplane_probs, whatplane_classes = model.predict_whatplane(image, topk=topk)
         response = prepare_response(whatplane_probs, whatplane_classes, "whatplane")
 
         # Transfer blob to classified image container
