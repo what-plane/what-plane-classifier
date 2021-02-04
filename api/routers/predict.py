@@ -28,7 +28,7 @@ def prepare_response(probs, class_names, predictor):
 
 
 @router.get(
-    "/predict/{filename}",
+    "/predict/{uuid}",
     response_model=PredictionSet,
     status_code=200,
     tags=["predict"],
