@@ -1,6 +1,5 @@
 **
-!requirements_app.txt
-!app/
+!api/
 !whatplane/
-!scripts/app/
+!scripts/api/
 !entrypoint.sh

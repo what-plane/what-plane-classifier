@@ -17,17 +17,17 @@ RUN pip install --upgrade pip \
     -f https://download.pytorch.org/whl/torch_stable.html \
     && pip install --no-cache-dir ${PYTHON_PACKAGES}
 
-COPY app ${APP_DIR}/app
+COPY api ${APP_DIR}/api
 COPY whatplane ${APP_DIR}/whatplane
-COPY scripts/app/ ${APP_DIR}/scripts/app/
+COPY scripts/api/ ${APP_DIR}/scripts/api/
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod a+x /entrypoint.sh
 
 EXPOSE 5000
 
-WORKDIR "${APP_DIR}/app"
+WORKDIR "${APP_DIR}"
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/entrypoint.sh"]
 
-CMD ["python", "app.py"]
+CMD ["start-uvicorn"]

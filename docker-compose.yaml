@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   whatplane-api:
-    image: wparr282/whatplane:0.2
+    image: wparr282/whatplane:0.3.1
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,4 +9,4 @@ services:
       - "5000:5000"
     environment:
       - AZURE_STORAGE_CONNECTION_STRING=
-    command: ["python", "app.py"]
+    command: ["start-uvicorn"] #, "--workers", "4"] # Need to download the ImageNet Densenet in the Entrypoint instead
