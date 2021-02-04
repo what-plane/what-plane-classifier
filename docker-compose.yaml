@@ -9,4 +9,4 @@ services:
       - "5000:5000"
     environment:
       - AZURE_STORAGE_CONNECTION_STRING=
-    command: ["start-uvicorn"] #, "--workers", "4"] # Need to download the ImageNet Densenet in the Entrypoint instead
+    command: ["start-uvicorn"]
