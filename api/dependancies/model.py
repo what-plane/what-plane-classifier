@@ -2,11 +2,7 @@ import sys
 from pathlib import Path
 import json
 
-from PIL import Image
-import torch
-
 import whatplane.models.model_helpers as mh
-from whatplane.models.data_helpers import PREDICT_TRANSFORM
 from whatplane.models.predict_model import predict_image_data
 
 BASE_DIR = Path(".")
