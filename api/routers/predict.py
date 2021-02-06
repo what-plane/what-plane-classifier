@@ -48,7 +48,7 @@ async def image_prediction_api(
         imagenet_probs, imagenet_classes, imagenet_likely_class = model.predict_imagenet(image, topk=5)
 
         # If image is an airliner, predict with airliners model, if not return imagenet
-        if "airliner" not in imagenet_likely_class:
+        if "airliner" not in imagenet_likely_class.lower():
             response = prepare_response(imagenet_probs[:topk], imagenet_classes[:topk], "imagenet")
         else:
             whatplane_probs, whatplane_classes = model.predict_whatplane(image, topk=topk)
