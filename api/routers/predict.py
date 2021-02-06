@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Path, Query, HTTPException
 from pydantic import BaseModel
 
 from ..dependancies import blob, model
@@ -41,20 +41,23 @@ async def image_prediction_api(
     topk: int = Query(1, title="The number of classes returned ordered by probability", ge=1, le=5),
 ):
 
-    blob_client = blob.ImageBlobClient(uuid)
-    image = blob_client.get_uploaded_image()
+    try:
+        blob_client = blob.ImageBlobClient(uuid)
+        image = blob_client.get_uploaded_image()
 
-    imagenet_probs, imagenet_classes, imagenet_likely_class = model.predict_imagenet(image, topk=5)
+        imagenet_probs, imagenet_classes, imagenet_likely_class = model.predict_imagenet(image, topk=5)
 
-    # If image is an airliner, predict with airliners model, if not return imagenet
-    if "airliner" not in imagenet_likely_class:
-        response = prepare_response(imagenet_probs[:topk], imagenet_classes[:topk], "imagenet")
-    else:
-        whatplane_probs, whatplane_classes = model.predict_whatplane(image, topk=topk)
-        response = prepare_response(whatplane_probs, whatplane_classes, "whatplane")
+        # If image is an airliner, predict with airliners model, if not return imagenet
+        if "Airliner" not in imagenet_likely_class:
+            response = prepare_response(imagenet_probs[:topk], imagenet_classes[:topk], "imagenet")
+        else:
+            whatplane_probs, whatplane_classes = model.predict_whatplane(image, topk=topk)
+            response = prepare_response(whatplane_probs, whatplane_classes, "whatplane")
 
-        # Transfer blob to classified image container
-        blob_client.copy_classified_blob(whatplane_classes[0])
+            # Transfer blob to classified image container
+            blob_client.copy_classified_blob(whatplane_classes[0])
+    except:
+        return HTTPException(status_code=500, detail="Internal Server Error")
 
     return response
 
