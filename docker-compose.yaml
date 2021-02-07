@@ -2,11 +2,6 @@ version: "3.9"
 services:
   whatplane-api:
     image: wparr282/whatplane:0.3.3
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
     ports:
       - "5000:5000"
     environment:

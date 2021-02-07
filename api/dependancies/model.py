@@ -1,21 +1,25 @@
-import sys
 from pathlib import Path
 import json
+
+from torch import hub
 
 import whatplane.models.model_helpers as mh
 from whatplane.models.predict_model import predict_image_data
 
 BASE_DIR = Path(".")
+MODELS_DIR = BASE_DIR / "models"
 
 with open(BASE_DIR / "api/imagenet_class_index.json") as f:
     imagenet_class_index = json.load(f)
 
+# Set PyTorch cache directory to where the model is stored
+hub.set_dir(str(MODELS_DIR.resolve()))
 imagenet_model = mh.initialize_model(
     "densenet161",
     [item[1] for item in list(imagenet_class_index.values())],
     replace_classifier=False,
 )
-whatplane_model = mh.load_model(BASE_DIR / "models/model.pth")
+whatplane_model = mh.load_model(MODELS_DIR / "model.pth")
 
 
 def predict_imagenet(image, topk):
