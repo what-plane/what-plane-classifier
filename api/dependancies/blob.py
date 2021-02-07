@@ -69,8 +69,13 @@ class ImageBlobClient:
 
     def get_uploaded_image(self):
 
-        img_bytes = io.BytesIO(self.uploaded_blob.download_blob().readall())
-        image = Image.open(img_bytes).convert("RGB")
+        try:
+            img_bytes = io.BytesIO(self.uploaded_blob.download_blob().readall())
+            image = Image.open(img_bytes).convert("RGB")
+        except Exception:
+            raise HTTPException(
+                status_code=400, detail=f"Unable to read image associated with provided UUID"
+            )
 
         return image
 
