@@ -23,8 +23,6 @@ RUN pip install --upgrade pip \
     -f https://download.pytorch.org/whl/torch_stable.html \
     && pip install --no-cache-dir ${PYTHON_PACKAGES}
 
-COPY api ${APP_DIR}/api
-COPY whatplane ${APP_DIR}/whatplane
 COPY scripts/api ${SCRIPTS_DIR}
 
 # Download required models into image
@@ -33,6 +31,9 @@ RUN mkdir -p ${MODELS_DIR} \
 
 RUN --mount=type=secret,id=ENV \
     python ${SCRIPTS_DIR}/fetch_model_azure.py ${WHATPLANE_MODEL} ${MODELS_DIR}
+
+COPY api ${APP_DIR}/api
+COPY whatplane ${APP_DIR}/whatplane
 
 RUN chmod a+x ${SCRIPTS_DIR}/entrypoint.sh
 

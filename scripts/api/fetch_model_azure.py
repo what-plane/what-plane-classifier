@@ -42,7 +42,6 @@ if __name__ == "__main__":
 
         except:
             raise RuntimeError(f"Unable to correctly parse secrets file {SECRET_PATH}")
-
     else:
         raise RuntimeError(
             (
