@@ -14,6 +14,6 @@ class HealthSet(BaseModel):
 @router.get(
     "/health", response_model=HealthSet, status_code=200, tags=["health"],
 )
-async def health_check():
+async def health_check() -> HealthSet:
     model_version = getattr(model.whatplane_model, "version", "Not Set")
     return HealthSet(model_version=model_version, ping="Pong!")

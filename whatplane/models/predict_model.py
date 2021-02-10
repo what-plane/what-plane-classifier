@@ -1,5 +1,6 @@
+from typing import List, Tuple
+
 import torch
-import numpy as np
 
 from .data_helpers import process_image_data, process_image_file
 
@@ -38,13 +39,15 @@ def test(dataloaders, model, criterion):
     return test_loss, test_accuracy, predicted_classes, correct_classes
 
 
-def predict_image_data(image_data, model, topk=1):
+def predict_image_data(image_data, model, topk=1) -> Tuple[List[float], List[str]]:
     image = process_image_data(image_data).float().unsqueeze(0)
     return predict_normalized(image, model, topk)
 
-def predict(image_path, model, topk=1):
+
+def predict(image_path, model, topk=1) -> Tuple[List[float], List[str]]:
     image = process_image_file(image_path).float().unsqueeze(0)
     return predict_normalized(image, model, topk)
+
 
 def predict_normalized(processed_image, model, topk):
     """ Predict the class (or classes) of an image using a trained deep learning model.
