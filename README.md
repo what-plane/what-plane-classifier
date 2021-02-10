@@ -1,7 +1,7 @@
 # WhatPlane - A passenger aircraft recognition app
 
 A computer vision app for Aircraft Recognition, built using PyTorch and deployed
-using fastAPI.
+using FastAPI.
 
 Served using Docker on Azure App Service. Frontend is built using React and can
 be found [here](https://github.com/what-plane/what-plane-frontend).
