@@ -27,7 +27,7 @@ def should_predict_whatplane(imagenet_probs: List[float], imagenet_classes: List
 
     Args:
         imagenet_probs (List[float]): List of probabilities returned from ImageNet
-        imagenet_classes (List[str]): List of class names returned from ImageNetwork
+        imagenet_classes (List[str]): List of class names returned from ImageNet
 
     Returns:
         bool: Returns True if WhatPlane is to be used, otherwise returns False
@@ -45,7 +45,7 @@ def should_predict_whatplane(imagenet_probs: List[float], imagenet_classes: List
 
 
 def get_wp_classes() -> List:
-    """Function to extract the the list of classes from whatplane
+    """Function to extract the the list of classes from WhatPlane model
 
     Returns:
         List: List of all classes from WhatPlane
