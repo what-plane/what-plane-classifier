@@ -63,7 +63,7 @@ async def image_prediction_api(
         imagenet_probs, imagenet_classes = model.predict_image_data(image, model.imagenet_model, topk=5)
         # If image is an airliner, predict with whatplane model, if not return imagenet prediction
         if model.should_predict_whatplane(imagenet_probs, imagenet_classes):
-            whatplane_probs, whatplane_classes = model.predict_image_data(image, model.whatplane_model, topk=5)
+            whatplane_probs, whatplane_classes = model.predict_image_data(image, model.whatplane_model, topk=topk)
             response = prepare_response(whatplane_probs, whatplane_classes, "whatplane")
 
             # Transfer blob to classified image container
