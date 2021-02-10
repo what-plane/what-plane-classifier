@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 class WPClass(BaseModel):
-    class_name: List[str] = model.get_wp_classes()
+    class_names: List[str] = model.get_wp_classes()
 
 
 @router.get(
