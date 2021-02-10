@@ -1,6 +1,9 @@
+from pathlib import Path
 from typing import List, Tuple
 
+from PIL.Image import Image
 import torch
+from torchvision.models.densenet import DenseNet
 
 from .data_helpers import process_image_data, process_image_file
 
@@ -39,17 +42,19 @@ def test(dataloaders, model, criterion):
     return test_loss, test_accuracy, predicted_classes, correct_classes
 
 
-def predict_image_data(image_data, model, topk=1) -> Tuple[List[float], List[str]]:
+def predict_image_data(
+    image_data: Image, model: DenseNet, topk: int = 1
+) -> Tuple[List[float], List[str]]:
     image = process_image_data(image_data).float().unsqueeze(0)
     return predict_normalized(image, model, topk)
 
 
-def predict(image_path, model, topk=1) -> Tuple[List[float], List[str]]:
+def predict(image_path: Path, model: DenseNet, topk: int = 1) -> Tuple[List[float], List[str]]:
     image = process_image_file(image_path).float().unsqueeze(0)
     return predict_normalized(image, model, topk)
 
 
-def predict_normalized(processed_image, model, topk):
+def predict_normalized(processed_image: torch.Tensor, model: DenseNet, topk: int) -> Tuple[List[float], List[str]]:
     """ Predict the class (or classes) of an image using a trained deep learning model.
 
     Args:

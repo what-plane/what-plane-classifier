@@ -23,11 +23,6 @@ imagenet_model = mh.initialize_model(
 )
 whatplane_model = mh.load_model(MODELS_DIR / "model.pth")
 
-
-def predict_imagenet(image: Image, topk: int) -> Tuple[List[float], List[str]]:
-    return predict_image_data(image, imagenet_model, topk)
-
-
 def should_predict_whatplane(imagenet_probs: List[float], imagenet_classes: List[str]) -> bool:
     VALID_CLASSES = ["Airliner", "Wing"]
 
@@ -41,11 +36,6 @@ def should_predict_whatplane(imagenet_probs: List[float], imagenet_classes: List
         return True
 
     return False
-
-
-def predict_whatplane(image: Image, topk: int) -> Tuple[List[float], List[str]]:
-    return predict_image_data(image, whatplane_model, topk)
-
 
 def get_wp_classes() -> List:
     return whatplane_model.class_names
