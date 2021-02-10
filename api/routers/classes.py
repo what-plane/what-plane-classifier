@@ -14,5 +14,5 @@ class WPClass(BaseModel):
 @router.get(
     "/classes/whatplane", response_model=WPClass, status_code=200, tags=["classes"],
 )
-async def get_classes():
+async def get_classes() -> WPClass:
     return WPClass()
