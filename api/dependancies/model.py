@@ -23,7 +23,7 @@ whatplane_model = mh.load_model(MODELS_DIR / "model.pth")
 
 
 def should_predict_whatplane(imagenet_probs: List[float], imagenet_classes: List[str]) -> bool:
-    """Function to check which model to use for prediction. 
+    """Function to check which model to use for prediction.
 
     Args:
         imagenet_probs (List[float]): List of probabilities returned from ImageNet
