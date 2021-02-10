@@ -15,4 +15,9 @@ class WPClass(BaseModel):
     "/classes/whatplane", response_model=WPClass, status_code=200, tags=["classes"],
 )
 async def get_classes() -> WPClass:
+    """API to return the class names available in the whatplane model
+
+    Returns:
+        WPClass: Class names from the whatplane model
+    """
     return WPClass()
