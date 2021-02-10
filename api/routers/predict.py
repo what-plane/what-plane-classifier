@@ -32,10 +32,29 @@ def prepare_response(probs: List[float], class_names: List[str], predictor: str)
 )
 async def image_prediction_api(
     uuid: str = Path(
-        ..., title="The UUID of the image uploaded by the frontend application", min_length=36
+        ...,
+        title="UUID of Image stored in the uploaded-images Azure Blob Storage Container.",
+        min_length=36,
     ),
-    topk: int = Query(1, title="The number of classes returned ordered by probability", ge=1, le=5),
+    topk: int = Query(
+        1, title="Number of classes to return (in descending order of probability).", ge=1, le=5
+    ),
 ) -> PredictionSet:
+    """API to return Imagenet or Whatplane predictions from provided Image UUID stored in Azure
+    Blob Storage
+
+    Args:
+        uuid (str): UUID of Image stored in the uploaded-images Azure Blob Storage Container.
+        topk (int, optional): Number of classes to return (in descending order of probability).
+                              Defaults to 1
+
+    Raises:
+        HTTPException: HTTP exception with error status code and description
+
+    Returns:
+        PredictionSet: Prediction information containing, predicted classes and probabilies
+                       and the source model (imagenet or whatplane)
+    """
 
     blob_client = blob.ImageBlobClient(uuid)
     image = blob_client.get_uploaded_image()
