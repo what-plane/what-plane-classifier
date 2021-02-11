@@ -1,57 +1,41 @@
-what-plane
-==============================
+# WhatPlane - A passenger aircraft recognition app
 
-A computer vision project for Aircraft Recognition
+A computer vision app for Aircraft Recognition, built using PyTorch and deployed
+using FastAPI.
 
-Project Organization
-------------
+Served using Docker on Azure App Service. Frontend is built using React and can
+be found [here](https://github.com/what-plane/what-plane-frontend).
+
+## Project Organization
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── README.md          <- The top-level README for developers using this project.
+    ├── api
+    │   ├── dependencies   <- Dependencies for the API
+    │   ├── routers        <- Routers for the API (`/predict`, etc..)
+    │   └── main.py        <- Main API function
+    │  
     ├── data
     │   ├── external       <- Data from third party sources.
     │   ├── interim        <- Intermediate data that has been transformed.
     │   ├── processed      <- The final, canonical data sets for modeling.
     │   └── raw            <- The original, immutable data dump.
     │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
     ├── models             <- Trained and serialized models, model predictions, or model summaries
     │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
+    ├── notebooks          <- Jupyter notebooks for experiments
     │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+    ├── scripts            <- Scripts required for the project
     │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
+    ├── whatplane          <- Source code for the models and data.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
+    │   ├── data           <- Scripts to download or generate data 
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
+    │   └── models         <- Scripts to train models
+    │
+    ├── requirements.txt   <- The requirements file for reproducing the analysis environment
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
-
-
---------
-
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>

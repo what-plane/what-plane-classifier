@@ -19,7 +19,7 @@ class PredictionSet(BaseModel):
     predictor: str = "whatplane"
 
 
-def prepare_response(probs, class_names, predictor):
+def prepare_response(probs: List[float], class_names: List[str], predictor: str) -> PredictionSet:
     predictions = [
         Prediction(class_name=class_name, class_prob=round(probs[i], 3))
         for i, class_name in enumerate(class_names)
@@ -28,36 +28,50 @@ def prepare_response(probs, class_names, predictor):
 
 
 @router.get(
-    "/predict/{uuid}",
-    response_model=PredictionSet,
-    status_code=200,
-    tags=["predict"],
-    responses={404: {"description": "File not found or is the wrong type"}},
+    "/predict/{uuid}", response_model=PredictionSet, status_code=200, tags=["predict"],
 )
 async def image_prediction_api(
     uuid: str = Path(
-        ..., title="The UUID of the image uploaded by the frontend application", min_length=36
+        ...,
+        title="UUID of Image stored in the uploaded-images Azure Blob Storage Container.",
+        min_length=36,
     ),
-    topk: int = Query(1, title="The number of classes returned ordered by probability", ge=1, le=5),
-):
+    topk: int = Query(
+        1, title="Number of classes to return (in descending order of probability).", ge=1, le=5
+    ),
+) -> PredictionSet:
+    """API to return Imagenet or Whatplane predictions from provided Image UUID stored in Azure
+    Blob Storage
+
+    Args:
+        uuid (str): UUID of Image stored in the uploaded-images Azure Blob Storage Container.
+        topk (int, optional): Number of classes to return (in descending order of probability).
+                              Defaults to 1
+
+    Raises:
+        HTTPException: HTTP exception with error status code and description
+
+    Returns:
+        PredictionSet: Prediction information containing, predicted classes and probabilies
+                       and the source model (imagenet or whatplane)
+    """
+
+    blob_client = blob.ImageBlobClient(uuid)
+    image = blob_client.get_uploaded_image()
 
     try:
-        blob_client = blob.ImageBlobClient(uuid)
-        image = blob_client.get_uploaded_image()
-
-        imagenet_probs, imagenet_classes, imagenet_likely_class = model.predict_imagenet(image, topk=5)
-
-        # If image is an airliner, predict with airliners model, if not return imagenet
-        if "Airliner" not in imagenet_likely_class:
-            response = prepare_response(imagenet_probs[:topk], imagenet_classes[:topk], "imagenet")
-        else:
-            whatplane_probs, whatplane_classes = model.predict_whatplane(image, topk=topk)
+        imagenet_probs, imagenet_classes = model.predict_image_data(image, model.imagenet_model, topk=5)
+        # If image is an airliner, predict with whatplane model, if not return imagenet prediction
+        if model.should_predict_whatplane(imagenet_probs, imagenet_classes):
+            whatplane_probs, whatplane_classes = model.predict_image_data(image, model.whatplane_model, topk=5)
             response = prepare_response(whatplane_probs, whatplane_classes, "whatplane")
 
             # Transfer blob to classified image container
             blob_client.copy_classified_blob(whatplane_classes[0])
+        else:
+            response = prepare_response(imagenet_probs[:topk], imagenet_classes[:topk], "imagenet")
+
     except:
-        return HTTPException(status_code=500, detail="Internal Server Error")
+        raise HTTPException(status_code=400, detail=f"Unable to predict on provided UUID")
 
     return response
-
