@@ -18,8 +18,6 @@ dependencies:
   - matplotlib
   - scikit-learn
   - tqdm
-  - fastapi
-  - uvicorn
   - azure-storage-blob
   # Devops Requirements
   - jupyter
