@@ -27,6 +27,3 @@ dependencies:
   - radon
   - pytest
   - mypy
-  # Install local package with pip
-  # - pip:
-  #   - -r file:requirements.txt
